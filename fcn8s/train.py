@@ -14,7 +14,7 @@ config.gpu_options.allow_growth = True
 train_record_path = '../data/gleason_grade_train.tfrecord'
 test_record_path =  '../data/gleason_grade_val.tfrecord'
 n_classes = 5
-batch_size = 4
+batch_size = 16
 crop_size = 512
 image_ratio = 0.25
 x_dims = [int(crop_size*image_ratio),
@@ -67,7 +67,7 @@ with tf.Session(config=config) as sess:
         summary_iters = 50,
         summary_image_iters = iterations,
         summary_image_n = 4,
-        summarize_grads = True,
+        # summarize_grads = True,
         # summarize_vars = True,
         x_dims = x_dims)
     model.print_info()
@@ -91,7 +91,7 @@ with tf.Session(config=config) as sess:
                 model.train_step(lr=epoch_lr)
                 # model.train_step(lr=1e-4)
 
-            model.test(keep_prob=0.8)
+            model.test(keep_prob=1.0)
             print 'Epoch [{}] step [{}] time elapsed [{}]s'.format(
                 epx, model.global_step, time.time()-epoch_start)
 

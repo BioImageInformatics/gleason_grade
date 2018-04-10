@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import sys, datetime, os, time
 
-sys.path.insert(0, './tfmodels')
+sys.path.insert(0, '../tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
@@ -12,21 +12,25 @@ from dataset import TFRecordInput
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = 'ccrcc_big_train.tfrecord'
-test_record_path =  'ccrcc_big_test.tfrecord'
-batch_size = 16
+train_record_path = '../data/gleason_grade_train.tfrecord'
+test_record_path =  '../data/gleason_grade_val.tfrecord'
+n_classes = 5
+batch_size = 4
 crop_size = 512
 image_ratio = 0.25
+x_dims = [int(crop_size*image_ratio),
+          int(crop_size*image_ratio),
+          3]
 
 epochs = 500
-iterations = 3000
+iterations = 500/batch_size
 snapshot_epochs = 10
 step_start = 0
 
-prefetch = 512
-threads = 4
+prefetch = 756
+threads = 8
 
-basedir = 'b_ccrcc_20180406'
+basedir = '5x'
 log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
     basedir=basedir, remove_old=False)
 snapshot_path = None
@@ -46,7 +50,7 @@ with tf.Session(config=config) as sess:
         batch_size = batch_size,
         prefetch = prefetch,
         shuffle_buffer = 128,
-        n_classes = 4,
+        n_classes = n_classes,
         as_onehot = True,
         mask_dtype = tf.uint8,
         img_channels = 3,
@@ -55,22 +59,18 @@ with tf.Session(config=config) as sess:
     dataset.print_info()
 
     model = Training( sess = sess,
-        class_weights = [0.2, 0.2, 0.5, 0.1],
         dataset = dataset,
-        dense_stacks = [8, 8, 8, 8],
-        growth_rate = 64,
-        k_size = 3,
         global_step = step_start,
         learning_rate = lr_0,
-        n_classes = 4,
+        n_classes = n_classes,
         log_dir = log_dir,
         save_dir = save_dir,
-        summary_iters = 100,
-        summary_image_iters = 500,
-        summary_image_n = 2,
+        summary_iters = 50,
+        summary_image_iters = iterations,
+        summary_image_n = 4,
         # summarize_grads = True,
         # summarize_vars = True,
-        x_dims = [128, 128, 3])
+        x_dims = x_dims)
     model.print_info()
 
     if snapshot_path is not None:
@@ -92,7 +92,7 @@ with tf.Session(config=config) as sess:
                 model.train_step(lr=epoch_lr)
                 # model.train_step(lr=1e-4)
 
-            model.test(keep_prob=0.8)
+            model.test(keep_prob=1.0)
             print 'Epoch [{}] step [{}] time elapsed [{}]s'.format(
                 epx, model.global_step, time.time()-epoch_start)
 

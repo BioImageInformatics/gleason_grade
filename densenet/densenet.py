@@ -15,11 +15,11 @@ Implementation is loosely based on the above papers.
 class DenseNet(Segmentation):
     densenet_defaults={
         ## Number of layers to use for each dense block
-        'dense_stacks': [4, 8, 8, 16],
+        'dense_stacks': [8, 8, 8, 8],
         ## The parameter k in the paper. Dense blocks end up with L*k kernels
-        'growth_rate': 16,
+        'growth_rate': 64,
         ## Kernel size for all layers. either scalar or list same len as dense_stacks
-        'k_size': 3,
+        'k_size': 5,
         'name': 'densenet',
     }
 
