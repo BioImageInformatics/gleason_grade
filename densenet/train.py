@@ -6,8 +6,7 @@ sys.path.insert(0, '../tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from model_bayesian import Training
-from dataset import TFRecordInput
+from densenet import Training
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
