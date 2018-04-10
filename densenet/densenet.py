@@ -14,12 +14,14 @@ Implementation is loosely based on the above papers.
 """
 class DenseNet(Segmentation):
     densenet_defaults={
+        ## Ad-hoc
+        # 'class_weights': [0.9, 0.9, 0.9, 0.3, 0.3],
         ## Number of layers to use for each dense block
         'dense_stacks': [8, 8, 8, 8],
         ## The parameter k in the paper. Dense blocks end up with L*k kernels
-        'growth_rate': 64,
+        'growth_rate': 48,
         ## Kernel size for all layers. either scalar or list same len as dense_stacks
-        'k_size': 5,
+        'k_size': 3,
         'name': 'densenet',
     }
 
@@ -112,7 +114,7 @@ class DenseNet(Segmentation):
 
     Similar to Table 2 in https://arxiv.org/abs/1611.09326
     """
-    def model(self, x_in, keep_prob=0.2, reuse=False, training=True):
+    def model(self, x_in, keep_prob=0.8, reuse=False, training=True):
         print('DenseNet Model')
         nonlin = self.nonlin
         print('Non-linearity:', nonlin)
@@ -170,7 +172,7 @@ class DenseNet(Segmentation):
     ## Overload to fill in the default keep_prob
     def train_step(self, lr):
         self.global_step += 1
-        fd = {self.keep_prob: 0.5,
+        fd = {self.keep_prob: 0.8,
               self.training: True,
               self.learning_rate: lr}
         self.sess.run(self.seg_training_op_list, feed_dict=fd)
