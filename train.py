@@ -12,8 +12,8 @@ from dataset import TFRecordInput
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = 'ccrcc_big_train.tfrecord'
-test_record_path =  'ccrcc_big_test.tfrecord'
+train_record_path = 'gleason_grade_train.tfrecord'
+test_record_path =  'gleason_grade_val.tfrecord'
 batch_size = 16
 crop_size = 512
 image_ratio = 0.25
@@ -26,7 +26,7 @@ step_start = 0
 prefetch = 512
 threads = 4
 
-basedir = 'b_ccrcc_20180406'
+basedir = './'
 log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
     basedir=basedir, remove_old=False)
 snapshot_path = None
