@@ -114,7 +114,21 @@ class FCN(Segmentation):
 
             return y_hat
 
+    ## Overload to fill in the default keep_prob
+    def train_step(self, lr):
+        self.global_step += 1
+        fd = {self.keep_prob: 0.5,
+              self.training: True,
+              self.learning_rate: lr}
+        self.sess.run(self.seg_training_op_list, feed_dict=fd)
 
+        if self.global_step % self.summary_iters == 0:
+            self._write_scalar_summaries(lr)
+
+        if self.global_step % self.summary_image_iters == 0:
+            self._write_image_summaries()
+
+            
 class Training(FCN):
     train_defaults = { 'mode': 'TRAIN' }
 

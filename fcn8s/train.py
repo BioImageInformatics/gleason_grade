@@ -64,10 +64,10 @@ with tf.Session(config=config) as sess:
         n_classes = n_classes,
         log_dir = log_dir,
         save_dir = save_dir,
-        summary_iters = 10,
+        summary_iters = 50,
         summary_image_iters = iterations,
         summary_image_n = 4,
-        # summarize_grads = True,
+        summarize_grads = True,
         # summarize_vars = True,
         x_dims = x_dims)
     model.print_info()
