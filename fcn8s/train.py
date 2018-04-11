@@ -117,4 +117,4 @@ if __name__ == '__main__':
     basedir = sys.argv[3]
 
     print(batch_size, image_ratio, basedir)
-    # main(batch_size, image_ratio, basedir)
+    main(batch_size, image_ratio, basedir)
