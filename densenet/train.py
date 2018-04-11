@@ -15,10 +15,10 @@ config.gpu_options.allow_growth = True
 train_record_path = '../data/gleason_grade_train.tfrecord'
 test_record_path =  '../data/gleason_grade_val.tfrecord'
 
-def main(batch_size, image_ratio, basedir):
+def main(batch_size, image_ratio, crop_size, basedir):
     n_classes = 5
     # batch_size = 32
-    crop_size = 512
+    # crop_size = 512
     # image_ratio = 0.25
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
@@ -117,7 +117,7 @@ def main(batch_size, image_ratio, basedir):
 if __name__ == '__main__':
     batch_size = int(sys.argv[1])
     image_ratio = float(sys.argv[2])
-    basedir = sys.argv[3]
+    crop_size = int(sys.argv[3])
+    basedir = sys.argv[4]
 
-    print(batch_size, image_ratio, basedir)
-    main(batch_size, image_ratio, basedir)
+    main(batch_size, image_ratio, crop_size, basedir)
