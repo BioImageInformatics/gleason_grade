@@ -25,8 +25,8 @@ def main(batch_size, image_ratio, basedir):
               int(crop_size*image_ratio),
               3]
 
-    epochs = 500
-    iterations = 500/batch_size
+    iterations = (500/batch_size)*5  ## Define epoch as 5 passes over the data
+    epochs = 500 ## So we get 500 * 5 = 2500 times over the data
     snapshot_epochs = 10
     step_start = 0
 

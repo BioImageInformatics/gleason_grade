@@ -17,7 +17,7 @@ class DenseNet(Segmentation):
         ## Ad-hoc
         # 'class_weights': [0.9, 0.9, 0.9, 0.3, 0.3],
         ## Number of layers to use for each dense block
-        'dense_stacks': [8, 8, 8, 8],
+        'dense_stacks': [4, 5, 7, 10],
         ## The parameter k in the paper. Dense blocks end up with L*k kernels
         'growth_rate': 48,
         ## Kernel size for all layers. either scalar or list same len as dense_stacks
