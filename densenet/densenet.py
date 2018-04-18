@@ -22,6 +22,7 @@ class DenseNet(Segmentation):
         'growth_rate': 48,
         ## Kernel size for all layers. either scalar or list same len as dense_stacks
         'k_size': 3,
+        'n_classes': 5,
         'name': 'densenet',
     }
 
@@ -62,7 +63,7 @@ class DenseNet(Segmentation):
         print('Dense block #{} ({})'.format(block_num, name_scope))
 
         concat_list = [x_flow]
-        print('\t x_flow', x_flow.get_shape())
+        # print('\t x_flow', x_flow.get_shape())
         with tf.variable_scope('{}_{}'.format(name_scope, block_num)):
             for l_i in xrange(n_layers):
                 layer_name = 'd{}_l{}'.format(block_num, l_i)
@@ -71,7 +72,7 @@ class DenseNet(Segmentation):
                 #x_hidden = tf.contrib.nn.alpha_dropout(x_hidden, keep_prob=keep_prob)
                 concat_list.append(x_hidden)
                 x_flow = tf.concat(concat_list, axis=-1, name='concat'+layer_name)
-                print('\t\t CONCAT {}:'.format(block_num, l_i), x_flow.get_shape())
+                # print('\t\t CONCAT {}:'.format(block_num, l_i), x_flow.get_shape())
 
             if concat_input:
                 x_i = tf.concat(concat_list, axis=-1, name='concat_out')
@@ -134,14 +135,14 @@ class DenseNet(Segmentation):
                 dense_i = self._dense_block(dense_, n_, keep_prob=keep_prob, block_num=i_, name_scope='dd')
                 dense_ = tf.concat([dense_i, dense_], axis=-1, name='concat_down_{}'.format(i_))
                 self.downsample_list.append(dense_)
-                print('\t DENSE: ', dense_.get_shape())
+                # print('\t DENSE: ', dense_.get_shape())
 
                 dense_ = self._transition_down(dense_, i_, keep_prob=keep_prob)
 
 
-            print("DOWNSAMPLING LIST:")
-            for ds_ in self.downsample_list:
-                print(ds_)
+            # print("DOWNSAMPLING LIST:")
+            # for ds_ in self.downsample_list:
+            #     print(ds_)
 
             ## bottleneck dense layer
             dense_ = self._dense_block(dense_, self.dense_stacks[-1],
@@ -154,14 +155,14 @@ class DenseNet(Segmentation):
             for i_, n_ in enumerate(reversed(self.dense_stacks[:-1])):
                 dense_ = self._transition_up(dense_, tu_num=i_, keep_prob=keep_prob)
 
-                print('\t Concatenating ', self.downsample_list[-(i_+1)])
+                # print('\t Concatenating ', self.downsample_list[-(i_+1)])
                 dense_ = tf.concat([dense_, self.downsample_list[-(i_+1)]],
                     axis=-1, name='concat_skip_{}'.format(i_))
-                print('\t skip_{}: '.format(i_), dense_.get_shape())
+                # print('\t skip_{}: '.format(i_), dense_.get_shape())
 
                 dense_ = self._dense_block(dense_, n_, concat_input=False,
                     keep_prob=keep_prob, block_num=i_, name_scope='du')
-                print('\t dense_up{}: '.format(i_), dense_.get_shape())
+                # print('\t dense_up{}: '.format(i_), dense_.get_shape())
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))
