@@ -15,7 +15,7 @@ config.gpu_options.allow_growth = True
 train_record_path = '../data/gleason_grade_train.tfrecord'
 test_record_path =  '../data/gleason_grade_val.tfrecord'
 
-def main(batch_size, image_ratio, crop_size, basedir):
+def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
     n_classes = 5
     # batch_size = 32
     # crop_size = 512
@@ -24,9 +24,9 @@ def main(batch_size, image_ratio, crop_size, basedir):
               int(crop_size*image_ratio),
               3]
 
-    iterations = (500/batch_size)*5  ## Define epoch as 5 passes over the data
-    epochs = 500 ## So we get 500 * 5 = 2500 times over the data
-    snapshot_epochs = 100
+    iterations = (500/batch_size)*10  ## Define epoch as 10 passes over the data
+    epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
+    snapshot_epochs = 5
     test_epochs = 10
     step_start = 0
 
@@ -65,12 +65,12 @@ def main(batch_size, image_ratio, crop_size, basedir):
             dataset = dataset,
             global_step = step_start,
             learning_rate = lr_0,
-            n_classes = n_classes,
             log_dir = log_dir,
             save_dir = save_dir,
-            summary_iters = 50,
+            summary_iters = 100,
             summary_image_iters = iterations,
             summary_image_n = 4,
+            max_to_keep = 20,
             # summarize_grads = True,
             # summarize_vars = True,
             x_dims = x_dims)
@@ -118,6 +118,7 @@ if __name__ == '__main__':
     batch_size = int(sys.argv[1])
     image_ratio = float(sys.argv[2])
     crop_size = int(sys.argv[3])
-    basedir = sys.argv[4]
+    n_epochs = int(sys.argv[4])
+    basedir = sys.argv[5]
 
-    main(batch_size, image_ratio, crop_size, basedir)
+    main(batch_size, image_ratio, crop_size, n_epochs, basedir)

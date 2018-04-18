@@ -6,11 +6,12 @@ import pandas as pd
 from sklearn.metrics import (jaccard_similarity_score,
                              confusion_matrix,
                              roc_auc_score,
-                             accuracy_score)
+                             accuracy_score,
+                             classification_report)
 import os, sys, glob, shutil, time, argparse, cv2
 
 sys.path.insert(0, '.')
-from model_bayesian import Inference
+from fcn8s import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -18,7 +19,7 @@ config.gpu_options.allow_growth = True
 CROP_SIZE = 1024
 RESIZE_FACTOR = 0.25
 XDIM = [256, 256, 3]
-SNAPSHOT = 'snapshots/bayesian_densenet.ckpt-240000'
+# SNAPSHOT = '5x/snapshots/densenet.ckpt-77345'
 
 def compare_tile(yhat_vect, ytrue_vect):
 
@@ -27,22 +28,22 @@ def compare_tile(yhat_vect, ytrue_vect):
     return accuracy
 
 
-def crop_and_resize(img, mask):
+def crop_and_resize(img, mask, crop=CROP_SIZE, resize=RESIZE_FACTOR):
     h, w = img.shape[:2]
 
     c_h, c_w = h/2, w/2
-    crop_half = CROP_SIZE/2
+    crop_half = crop/2
     img = img[c_h-crop_half: c_h+crop_half, c_w-crop_half:c_w+crop_half, :]
     mask = mask[c_h-crop_half: c_h+crop_half, c_w-crop_half:c_w+crop_half]
 
-    img = cv2.resize(img, dsize=(0,0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
-    mask = cv2.resize(mask, dsize=(0,0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR,
+    img = cv2.resize(img, dsize=(0,0), fx=resize, fy=resize)
+    mask = cv2.resize(mask, dsize=(0,0), fx=resize, fy=resize,
         interpolation=cv2.INTER_NEAREST)
 
     return img, mask
 
 
-def test_tiles(jpg_dir, mask_dir):
+def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR):
     jpg_patt = os.path.join(jpg_dir, '*.jpg')
     jpg_list = sorted(glob.glob(jpg_patt))
 
@@ -65,10 +66,10 @@ def test_tiles(jpg_dir, mask_dir):
     ytrue_all = np.array([])
     with tf.Session(config=config) as sess:
         model = Inference(sess=sess, x_dims=XDIM)
-        model.restore(SNAPSHOT)
+        model.restore(snapshot)
 
         for idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
-            print('{:04d}'.format(idx), jpg, mask)
+            # print('{:04d}'.format(idx), jpg, mask)
             tile_name = os.path.basename(jpg).replace('.jpg', '')
             indices.append(tile_name)
             img = cv2.imread(jpg)[:,:,::-1]
@@ -77,7 +78,7 @@ def test_tiles(jpg_dir, mask_dir):
             img, ytrue = crop_and_resize(img, ytrue)
             img = img * (2./255) - 1.
 
-            yhat = model.bayesian_inference(np.expand_dims(img, 0))
+            yhat = model.inference(np.expand_dims(img, 0))
             yhat = np.argmax(yhat, axis=-1)
 
             yhat_vect = yhat.flatten()
@@ -89,12 +90,16 @@ def test_tiles(jpg_dir, mask_dir):
 
     aggregated_metrics = pd.DataFrame(aggregate_metrics, index=indices,
         columns=['Accuracy'])
-    print(aggregated_metrics)
-    confmat = confusion_matrix(yhat_all, ytrue_all)
+    confmat = confusion_matrix(ytrue_all, yhat_all)
+    class_report = classification_report(ytrue_all, yhat_all, digits=4)
     print(confmat)
+    print(class_report)
 
 if __name__ == '__main__':
     jpg_dir = sys.argv[1]
     mask_dir = sys.argv[2]
+    snapshot = sys.argv[3]
+    crop = int(sys.argv[4])
+    resize = float(sys.argv[5])
 
-    test_tiles(jpg_dir, mask_dir)
+    test_tiles(jpg_dir, mask_dir, snapshot, crop, resize)
