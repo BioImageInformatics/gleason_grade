@@ -39,7 +39,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
     snapshot_path = None
 
     gamma = 1e-5
-    lr_0 = 5e-4
+    lr_0 = 1e-4
     def learning_rate(lr_0, gamma, step):
         return lr_0 * np.exp(-gamma*step)
 

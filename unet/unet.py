@@ -43,7 +43,7 @@ class UNet(Segmentation):
 
         super(UNet, self).__init__(**unet_defaults)
 
-    def model(self, x_in, keep_prob=0.8, reuse=False, training=True):
+    def model(self, x_in, keep_prob=0.5, reuse=False, training=True):
         print('DenseNet Model')
         nonlin = self.nonlin
         print('Non-linearity:', nonlin)
@@ -77,17 +77,20 @@ class UNet(Segmentation):
             pool3 = tf.nn.max_pool(down3_1, **pool_opts)
             down4_0 = nonlin(conv(pool3,   n_kernel=kerns[3] ,var_scope='down4_0', **conv_opts))
             down4_1 = nonlin(conv(down4_0, n_kernel=kerns[3] ,var_scope='down4_1', **conv_opts))
+            down4_1 = tf.contrib.nn.alpha_dropout(down4_1, keep_prob=keep_prob)
             print('down4_1', down4_1.get_shape())
             ## 32, 512
 
             pool4 = tf.nn.max_pool(down4_1, **pool_opts)
             down5_0 = nonlin(conv(pool4,   n_kernel=kerns[4] ,var_scope='down5_0', **conv_opts))
             down5_1 = nonlin(conv(down5_0, n_kernel=kerns[4] ,var_scope='down5_1', **conv_opts))
+            down5_1 = tf.contrib.nn.alpha_dropout(down5_1, keep_prob=keep_prob)
             print('down5_1', down5_1.get_shape())
             ## 16, 1024
 
             up4 = nonlin(deconv(down5_1, n_kernel=kerns[3], var_scope='up4', **deconv_opts)) ## 32 x 512
             concat4 = crop_concat(down4_1, up4)
+            concat4 = tf.contrib.nn.alpha_dropout(concat4, keep_prob=keep_prob)
             print('concat4', concat4.get_shape())
             up4_1 = nonlin(conv(concat4, n_kernel=kerns[3], var_scope='up4_1', **conv_opts))
             up4_2 = nonlin(conv(up4_1,   n_kernel=kerns[3], var_scope='up4_2', **conv_opts))
@@ -95,6 +98,7 @@ class UNet(Segmentation):
 
             up3 = nonlin(deconv(up4_2, n_kernel=kerns[2], var_scope='up3', **deconv_opts)) ## 64 x 256
             concat3 = crop_concat(down3_1, up3)
+            concat3 = tf.contrib.nn.alpha_dropout(concat3, keep_prob=keep_prob)
             print('concat3', concat3.get_shape())
             up3_1 = nonlin(conv(concat3, n_kernel=kerns[2], var_scope='up3_1', **conv_opts))
             up3_2 = nonlin(conv(up3_1,   n_kernel=kerns[2], var_scope='up3_2', **conv_opts))
@@ -122,7 +126,7 @@ class UNet(Segmentation):
     ## Overload to fill in the default keep_prob
     def train_step(self, lr):
         self.global_step += 1
-        fd = {self.keep_prob: 0.8,
+        fd = {self.keep_prob: 0.5,
               self.training: True,
               self.learning_rate: lr}
         self.sess.run(self.seg_training_op_list, feed_dict=fd)
