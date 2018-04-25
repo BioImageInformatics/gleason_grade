@@ -6,9 +6,9 @@ set -e
 # img_ratios=(0.25 0.5 1.0)
 # basedirs=('5x' '10x' '20x')
 
-batch_sizes=(8 8 8)
+batch_sizes=(24 10 4)
 img_ratios=(0.25 0.5 1.0)
-crop_sizes=(1024 512 256)
+crop_sizes=(512 512 512)
 epochs=(100 100 100)
 basedirs=('5x' '10x' '20x')
 
