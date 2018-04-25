@@ -9,7 +9,7 @@ set -e
 batch_sizes=(8 8 8)
 img_ratios=(0.25 0.5 1.0)
 crop_sizes=(1024 512 256)
-epochs=(100 250 500)
+epochs=(100 100 100)
 basedirs=('5x' '10x' '20x')
 
 for i in `seq 0 2`; do

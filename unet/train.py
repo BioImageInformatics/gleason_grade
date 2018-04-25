@@ -24,10 +24,10 @@ def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
               int(crop_size*image_ratio),
               3]
 
-    iterations = (500/batch_size)*10  ## Define epoch as 10 passes over the data
+    iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
-    snapshot_epochs = 5
-    test_epochs = 10
+    snapshot_epochs = 10
+    test_epochs = 1
     step_start = 0
 
     prefetch = 756

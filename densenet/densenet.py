@@ -148,6 +148,7 @@ class DenseNet(Segmentation):
             dense_ = self._dense_block(dense_, self.dense_stacks[-1],
                 keep_prob=keep_prob, block_num=len(self.dense_stacks)-1)
             dense_ = tf.contrib.nn.alpha_dropout(dense_, keep_prob=keep_prob)
+            self.bottleneck = tf.identity(dense_)
 
             print('\t Bottleneck: ', dense_.get_shape())
 
