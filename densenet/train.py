@@ -27,7 +27,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
     iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
     snapshot_epochs = 10
-    test_epochs = 1
+    test_epochs = 10
     step_start = 0
 
     prefetch = 756
@@ -39,7 +39,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
     snapshot_path = None
 
     gamma = 1e-5
-    lr_0 = 1e-4
+    lr_0 = 1e-5
     def learning_rate(lr_0, gamma, step):
         return lr_0 * np.exp(-gamma*step)
 
@@ -52,7 +52,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, basedir):
             ratio = image_ratio,
             batch_size = batch_size,
             prefetch = prefetch,
-            shuffle_buffer = 128,
+            shuffle_buffer = 256,
             n_classes = n_classes,
             as_onehot = True,
             mask_dtype = tf.uint8,
