@@ -47,6 +47,7 @@ class FCN(Segmentation):
             c0_pool = tf.nn.max_pool(c0_1, [1,2,2,1], [1,2,2,1], padding='VALID',
                 name='c0_pool')
             print('\t c0_pool', c0_pool.get_shape()) ## in / 2
+            self.conv_1 = tf.identity(c0_pool)
 
             c1_0 = nonlin(conv(c0_pool, self.conv_kernels[1], k_size=k_size[1], stride=1, var_scope='c1_0'))
             c1_1 = nonlin(conv(c1_0, self.conv_kernels[1], k_size=k_size[1], stride=1, var_scope='c1_1'))
@@ -80,12 +81,18 @@ class FCN(Segmentation):
             fc_1 = tf.contrib.nn.alpha_dropout(fc_1, keep_prob=keep_prob)
             print('\t fc_1', fc_1.get_shape())  ##
 
+            self.bottleneck_1 = tf.identity(fc_1)
+
             fc_2 = nonlin(conv(fc_1, self.fc_dim, k_size=1, stride=1, var_scope='fc_2'))
             fc_2 = tf.contrib.nn.alpha_dropout(fc_2, keep_prob=keep_prob)
             print('\t fc_2', fc_2.get_shape())  ##
 
+            self.bottleneck_2 = tf.identity(fc_2)
+
             score_fr = conv(fc_2, self.n_classes, stride=1, var_scope='score_fr')
             print('\t score_fr', score_fr.get_shape())  ##
+
+            self.bottleneck_3 = tf.identity(score_fr)
 
             ## Upscoring
             # prediction_4 = nonlin(conv(c4_pool, self.n_classes, stride=1, var_scope='pred4'))
@@ -124,6 +131,8 @@ class FCN(Segmentation):
             print('\t upscore0', upscore0.get_shape())
             upscore0_fuse = upscore0 + prediction_0
             print('\t upscore0_fuse', upscore0_fuse.get_shape())
+
+            self.preout = tf.identity(upscore0_fuse)
 
             y_hat = deconv(upscore0_fuse, self.n_classes, k_size=4, var_scope='y_hat')
             print('\t y_hat', y_hat.get_shape())

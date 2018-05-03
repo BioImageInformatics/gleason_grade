@@ -78,8 +78,10 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
     indices = []
     y_hat_all = np.array([])
     y_true_all = np.array([])
+
+    x_dims = [int(crop * resize), int(crop * resize), 3]
     with tf.Session(config=config) as sess:
-        model = Inference(sess=sess, x_dims=XDIM)
+        model = Inference(sess=sess, x_dims=x_dims)
         model.restore(snapshot)
 
         for idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
@@ -89,7 +91,7 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
             img = cv2.imread(jpg)[:,:,::-1]
             y_true = cv2.imread(mask, -1)
 
-            img, y_true = crop_and_resize(img, y_true)
+            img, y_true = crop_and_resize(img, y_true, crop=crop, resize=resize)
             img = img * (2./255) - 1.
 
             y_hat = model.inference(np.expand_dims(img, 0))
@@ -129,13 +131,13 @@ if __name__ == '__main__':
     snapshot = sys.argv[3]
     mag = sys.argv[4]
     if mag == '5':
-        crop = 1024
+        crop = 512
         resize = 0.25
     elif mag == '10':
         crop = 512
         resize = 0.5
     elif mag == '20':
-        crop = 256
+        crop = 512
         resize = 1.
     else:
         print('Magnification (arg 4) invalid')

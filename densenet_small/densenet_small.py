@@ -17,9 +17,9 @@ class DenseNet(Segmentation):
         ## Ad-hoc
         # 'class_weights': [0.9, 0.9, 0.9, 0.3, 0.3],
         ## Number of layers to use for each dense block
-        'dense_stacks': [4, 5, 7, 10],
+        'dense_stacks': [4, 4, 4, 8],
         ## The parameter k in the paper. Dense blocks end up with L*k kernels
-        'growth_rate': 48,
+        'growth_rate': 24,
         ## Kernel size for all layers. either scalar or list same len as dense_stacks
         'k_size': 3,
         'n_classes': 5,
@@ -63,16 +63,13 @@ class DenseNet(Segmentation):
         print('Dense block #{} ({})'.format(block_num, name_scope))
 
         concat_list = [x_flow]
-        # print('\t x_flow', x_flow.get_shape())
         with tf.variable_scope('{}_{}'.format(name_scope, block_num)):
             for l_i in xrange(n_layers):
                 layer_name = 'd{}_l{}'.format(block_num, l_i)
                 x_b = nonlin(conv(x_flow, var_scope=layer_name+'b', **conv_settings_b))
                 x_hidden = nonlin(conv(x_b, var_scope=layer_name, **conv_settings))
-                #x_hidden = tf.contrib.nn.alpha_dropout(x_hidden, keep_prob=keep_prob)
                 concat_list.append(x_hidden)
                 x_flow = tf.concat(concat_list, axis=-1, name='concat'+layer_name)
-                # print('\t\t CONCAT {}:'.format(block_num, l_i), x_flow.get_shape())
 
             if concat_input:
                 x_i = tf.concat(concat_list, axis=-1, name='concat_out')
@@ -92,7 +89,6 @@ class DenseNet(Segmentation):
 
         with tf.variable_scope('{}_{}'.format(name_scope, td_num)):
             x_conv = nonlin(conv(x_in, var_scope='conv', **conv_settings))
-            x_conv = tf.contrib.nn.alpha_dropout(x_conv, keep_prob=keep_prob)
             x_pool = tf.nn.max_pool(x_conv, [1,2,2,1], [1,2,2,1], padding='VALID', name='pool')
 
         return x_pool
@@ -105,7 +101,6 @@ class DenseNet(Segmentation):
 
         with tf.variable_scope('{}_{}'.format(name_scope, tu_num)):
             x_deconv = deconv(x_in, var_scope='TU', **deconv_settings)
-            x_deconv = tf.contrib.nn.alpha_dropout(x_deconv, keep_prob=keep_prob)
 
         return x_deconv
 
@@ -141,10 +136,6 @@ class DenseNet(Segmentation):
                 dense_ = self._transition_down(dense_, i_, keep_prob=keep_prob)
 
 
-            # print("DOWNSAMPLING LIST:")
-            # for ds_ in self.downsample_list:
-            #     print(ds_)
-
             ## bottleneck dense layer
             dense_ = self._dense_block(dense_, self.dense_stacks[-1],
                 keep_prob=keep_prob, block_num=len(self.dense_stacks)-1)
@@ -157,14 +148,11 @@ class DenseNet(Segmentation):
             for i_, n_ in enumerate(reversed(self.dense_stacks[:-1])):
                 dense_ = self._transition_up(dense_, tu_num=i_, keep_prob=keep_prob)
 
-                # print('\t Concatenating ', self.downsample_list[-(i_+1)])
                 dense_ = tf.concat([dense_, self.downsample_list[-(i_+1)]],
                     axis=-1, name='concat_skip_{}'.format(i_))
-                # print('\t skip_{}: '.format(i_), dense_.get_shape())
 
                 dense_ = self._dense_block(dense_, n_, concat_input=False,
                     keep_prob=keep_prob, block_num=i_, name_scope='du')
-                # print('\t dense_up{}: '.format(i_), dense_.get_shape())
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))
@@ -200,23 +188,13 @@ class DenseNet(Segmentation):
 
             self.loss = self.seg_loss
 
+            print('Setting up batch norm update ops')
             self.batch_norm_updates = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(self.batch_norm_updates):
                 self.train_op = self.optimizer.minimize(self.loss,
                     var_list=self.var_list, name='{}_train'.format(self.name))
 
-            print('Setting up batch norm update ops')
-            # self.batch_norm_updates = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-            # self.seg_training_op_list.append(self.batch_norm_updates)
             self.seg_training_op_list.append(self.train_op)
-
-    # def test_step(self, step_delta, keep_prob=1.0):
-    #     fd = {self.keep_prob: keep_prob,
-    #           self.training: False}
-    #     summary_str, test_loss_ = self.sess.run([self.summary_test_ops, self.loss], feed_dict=fd)
-    #     self.summary_writer.add_summary(summary_str, self.global_step+step_delta)
-    #     print('#### GLEASON GRADE TEST #### [{:07d}] writing test summaries (loss={:3.3f})'.format(self.global_step, test_loss_))
-    #     return test_loss_
 
 
 class Training(DenseNet):
