@@ -127,7 +127,7 @@ if __name__ == '__main__':
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
         model = Inference(sess=sess, x_dims=[PROCESS_SIZE, PROCESS_SIZE, 3])
-        model.print_info()
+        # model.print_info()
         model.restore(SNAPSHOT_PATH)
 
         ramdisk_path = transfer_to_ramdisk(slide_path)
