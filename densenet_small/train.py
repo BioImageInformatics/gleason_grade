@@ -7,7 +7,7 @@ sys.path.insert(0, '../tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from densenet import Training
+from densenet_small import Training
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
