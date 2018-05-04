@@ -16,19 +16,18 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from densenet import Inference
-
+from unet import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-PROCESS_MAG = 5
-PROCESS_SIZE = 128
+PROCESS_MAG = 10
+PROCESS_SIZE = 256
 OVERSAMPLE = 1.1
 PREFETCH = 2048
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 PRINT_ITER = 1000
-SNAPSHOT_PATH = 'densenet/5x/snapshots/densenet.ckpt-27900'
+SNAPSHOT_PATH = 'unet/10x/snapshots/unet.ckpt-61690'
 RAM_DISK = '/dev/shm'
 
 def preprocess_fn(img):
