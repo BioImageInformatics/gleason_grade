@@ -12,7 +12,7 @@ from sklearn.metrics import (jaccard_similarity_score,
 import os, sys, glob, shutil, time, argparse, cv2
 
 sys.path.insert(0, '.')
-from densenet import Inference
+from densenet_small import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -105,12 +105,8 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
 
             aggregate_metrics.append(compare_tile(y_true_vect, y_hat_vect))
 
-    # aggregated_metrics = pd.DataFrame(aggregate_metrics, index=indices,
-    #     columns=['Accuracy'])
-    # confmat = confusion_matrix(y_true_all, y_hat_all)
-    # class_report = classification_report(y_true_all, y_hat_all, digits=4)
-    # print(confmat)
-    # print(class_report)
+    class_report = classification_report(y_true_all, y_hat_all, digits=4)
+    print(class_report)
 
     metrics = per_class_metrics(y_true_all, y_hat_all)
     metric_str = ''

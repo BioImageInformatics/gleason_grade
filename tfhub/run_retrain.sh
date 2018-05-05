@@ -11,4 +11,8 @@ python retrain.py --image_dir ../data/tfhub_data \
 --bottleneck_dir ./bottlenecks/$module_name \
 --tfhub_module $module_url \
 --saved_model_dir ./snapshots/$module_name \
---how_many_training_steps 6000
+--how_many_training_steps 6000 \
+--learning_rate 0.0001 \
+--train_batch_size 4 \
+--test_batch_size 4 \
+--flip_left_right 1

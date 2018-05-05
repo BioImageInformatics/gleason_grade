@@ -303,7 +303,15 @@ def create_module_graph(module_spec):
   height, width = hub.get_expected_image_size(module_spec)
   with tf.Graph().as_default() as graph:
     resized_input_tensor = tf.placeholder(tf.float32, [None, height, width, 3])
-    m = hub.Module(module_spec)
+
+
+    ### MAKE TRAINABLE
+
+    m = hub.Module(module_spec, trainable=True)
+
+    ### MAKE TRAINABLE
+
+
     bottleneck_tensor = m(resized_input_tensor)
     wants_quantization = any(node.op in FAKE_QUANT_OPS
                              for node in graph.as_graph_def().node)
@@ -592,6 +600,51 @@ def get_random_distorted_bottlenecks(
   return bottlenecks, ground_truths
 
 
+
+def get_random_distorted_images(
+    sess, image_lists, how_many, category, image_dir, input_jpeg_tensor,
+    distorted_image, resized_input_tensor, bottleneck_tensor):
+  """Retrieves distorted image data
+
+  Args:
+    sess: Current TensorFlow Session.
+    image_lists: OrderedDict of training images for each label.
+    how_many: The integer number of bottleneck values to return.
+    category: Name string of which set of images to fetch - training, testing,
+    or validation.
+    image_dir: Root folder string of the subfolders containing the training
+    images.
+    input_jpeg_tensor: The input layer we feed the image data to.
+    distorted_image: The output node of the distortion graph.
+    resized_input_tensor: The input node of the recognition graph.
+    bottleneck_tensor: The bottleneck output layer of the CNN graph.
+
+  Returns:
+    List of bottleneck arrays and their corresponding ground truths.
+  """
+  class_count = len(image_lists.keys())
+  bottlenecks = []
+  ground_truths = []
+  for unused_i in range(how_many):
+    label_index = random.randrange(class_count)
+    label_name = list(image_lists.keys())[label_index]
+    image_index = random.randrange(MAX_NUM_IMAGES_PER_CLASS + 1)
+    image_path = get_image_path(image_lists, label_name, image_index, image_dir,
+                                category)
+    if not tf.gfile.Exists(image_path):
+      tf.logging.fatal('File does not exist %s', image_path)
+    jpeg_data = tf.gfile.FastGFile(image_path, 'rb').read()
+    # Note that we materialize the distorted_image_data as a numpy array before
+    # sending running inference on the image. This involves 2 memory copies and
+    # might be optimized in other implementations.
+    distorted_image_data = sess.run(distorted_image,
+                                    {input_jpeg_tensor: jpeg_data})
+    ground_truths.append(label_index)
+  return distorted_image_data, ground_truths
+
+
+
+
 def should_distort_images(flip_left_right, random_crop, random_scale,
                           random_brightness):
   """Whether any distortions are enabled, from the input flags.
@@ -715,7 +768,7 @@ def variable_summaries(var):
     tf.summary.histogram('histogram', var)
 
 
-def add_final_retrain_ops(class_count, final_tensor_name, bottleneck_tensor,
+def add_final_retrain_ops(class_count, final_tensor_name, resized_image_tensor,
                           quantize_layer, is_training):
   """Adds a new softmax and fully-connected layer for training and eval.
 
@@ -740,13 +793,22 @@ def add_final_retrain_ops(class_count, final_tensor_name, bottleneck_tensor,
     The tensors for the training and cross entropy results, and tensors for the
     bottleneck input and ground truth input.
   """
-  batch_size, bottleneck_tensor_size = bottleneck_tensor.get_shape().as_list()
+  batch_size, resize_image_tensor_size = resized_image_tensor.get_shape().as_list()
   assert batch_size is None, 'We want to work with arbitrary batch size.'
   with tf.name_scope('input'):
-    bottleneck_input = tf.placeholder_with_default(
-        bottleneck_tensor,
-        shape=[batch_size, bottleneck_tensor_size],
-        name='BottleneckInputPlaceholder')
+    # bottleneck_input = tf.placeholder_with_default(
+    #     bottleneck_tensor,
+    #     shape=[batch_size, bottleneck_tensor_size],
+    #     name='BottleneckInputPlaceholder')
+
+        retrain_image_input = tf.placeholder_with_default(
+            bottleneck_tensor,
+            shape=[batch_size, bottleneck_tensor_size],
+            name='BottleneckInputPlaceholder')
+
+    bottleneck_tensor =
+
+  batch_size, bottleneck_tensor_size = bottleneck_tensor.get_shape().as_list()
 
     ground_truth_input = tf.placeholder(
         tf.int64, [batch_size], name='GroundTruthInput')
@@ -1068,8 +1130,13 @@ def main(_):
       # Get a batch of input bottleneck values, either calculated fresh every
       # time with distortions applied, or from the cache stored on disk.
       if do_distort_images:
-        (train_bottlenecks,
-         train_ground_truth) = get_random_distorted_bottlenecks(
+        # (train_bottlenecks,
+        #  train_ground_truth) = get_random_distorted_bottlenecks(
+        #      sess, image_lists, FLAGS.train_batch_size, 'training',
+        #      FLAGS.image_dir, distorted_jpeg_data_tensor,
+        #      distorted_image_tensor, resized_image_tensor, bottleneck_tensor)
+        (train_distored_images,
+         train_ground_truth) = get_random_distorted_images(
              sess, image_lists, FLAGS.train_batch_size, 'training',
              FLAGS.image_dir, distorted_jpeg_data_tensor,
              distorted_image_tensor, resized_image_tensor, bottleneck_tensor)
@@ -1080,11 +1147,12 @@ def main(_):
              FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
              decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
              FLAGS.tfhub_module)
+
       # Feed the bottlenecks and ground truth into the graph, and run a training
       # step. Capture training summaries for TensorBoard with the `merged` op.
       train_summary, _ = sess.run(
           [merged, train_step],
-          feed_dict={bottleneck_input: train_bottlenecks,
+          feed_dict={resized_image_tensor: train_distored_images,
                      ground_truth_input: train_ground_truth})
       train_writer.add_summary(train_summary, i)
 
@@ -1093,8 +1161,10 @@ def main(_):
       if (i % FLAGS.eval_step_interval) == 0 or is_last_step:
         train_accuracy, cross_entropy_value = sess.run(
             [evaluation_step, cross_entropy],
-            feed_dict={bottleneck_input: train_bottlenecks,
-                       ground_truth_input: train_ground_truth})
+          feed_dict={resized_image_tensor: train_bottlenecks,
+                     ground_truth_input: train_ground_truth})
+            # feed_dict={bottleneck_input: train_bottlenecks,
+            #            ground_truth_input: train_ground_truth})
         tf.logging.info('%s: Step %d: Train accuracy = %.1f%%' %
                         (datetime.now(), i, train_accuracy * 100))
         tf.logging.info('%s: Step %d: Cross entropy = %f' %
@@ -1103,7 +1173,7 @@ def main(_):
         # moving averages being updated by the validation set, though in
         # practice this makes a negligable difference.
         validation_bottlenecks, validation_ground_truth, _ = (
-            get_random_cached_bottlenecks(
+            get_random_distorted_bottlenecks(
                 sess, image_lists, FLAGS.validation_batch_size, 'validation',
                 FLAGS.bottleneck_dir, FLAGS.image_dir, jpeg_data_tensor,
                 decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
