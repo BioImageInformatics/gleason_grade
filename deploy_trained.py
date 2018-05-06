@@ -24,8 +24,7 @@ config.gpu_options.allow_growth = True
 PROCESS_MAG = 10
 PROCESS_SIZE = 256
 OVERSAMPLE = 1.1
-PREFETCH = 2048
-BATCH_SIZE = 16
+BATCH_SIZE = 12
 PRINT_ITER = 1000
 SNAPSHOT_PATH = 'densenet_small/10x/snapshots/densenet.ckpt-30845'
 RAM_DISK = '/dev/shm'
@@ -61,6 +60,7 @@ def main(slide_path, model, sess, out_dir):
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
     svs.print_info()
+    PREFETCH = max(len(svs.place_list), 2048)
 
     def wrapped_fn(idx):
         coords = svs.tile_list[idx]
@@ -75,7 +75,7 @@ def main(slide_path, model, sess, out_dir):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=12)
+    ds = ds.map(read_region_at_index, num_parallel_calls=4)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 
@@ -116,12 +116,15 @@ def main(slide_path, model, sess, out_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--slide')
+    parser.add_argument('--slide_dir')
     parser.add_argument('--out')
 
     args = parser.parse_args()
-    slide_path = args.slide
+    slide_dir = args.slide_dir
     out_dir = args.out
+
+    slide_list = glob.glob(os.path.join(slide_dir, '*svs'))
+    print('Working on {} slides from {}'.format(len(slide_list), slide_dir))
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
@@ -129,24 +132,27 @@ if __name__ == '__main__':
         # model.print_info()
         model.restore(SNAPSHOT_PATH)
 
-        ramdisk_path = transfer_to_ramdisk(slide_path)
-        try:
-            prob_img, rgb_img = main(ramdisk_path, model, sess, out_dir)
-            outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
-            outname_rgb = os.path.basename(ramdisk_path).replace('.svs', '_rgb.jpg')
+        for slide_path in slide_list:
+            ramdisk_path = transfer_to_ramdisk(slide_path)
+            try:
+                prob_img, rgb_img = main(ramdisk_path, model, sess, out_dir)
+                outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
+                outname_rgb = os.path.basename(ramdisk_path).replace('.svs', '_rgb.jpg')
 
-            outpath =  os.path.join(out_dir, outname_prob)
-            print('Writing {}'.format(outpath))
-            np.save(outpath, prob_img)
+                outpath =  os.path.join(out_dir, outname_prob)
+                print('Writing {}'.format(outpath))
+                np.save(outpath, prob_img)
 
-            outpath =  os.path.join(out_dir, outname_rgb)
-            print('Writing {}'.format(outpath))
-            cv2.imwrite(outpath, rgb_img)
+                outpath =  os.path.join(out_dir, outname_rgb)
+                print('Writing {}'.format(outpath))
+                cv2.imwrite(outpath, rgb_img)
 
-        except Exception as e:
-            print('Caught exception')
-            print(e.__doc__)
-            print(e.message)
-        finally:
-            os.remove(ramdisk_path)
-            print('Removed {}'.format(ramdisk_path))
+            except Exception as e:
+                print('Caught exception')
+                print(e.__doc__)
+                print(e.message)
+            finally:
+                os.remove(ramdisk_path)
+                print('Removed {}'.format(ramdisk_path))
+
+    print('Done!')

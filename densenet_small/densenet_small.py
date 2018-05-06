@@ -8,9 +8,28 @@ from tfmodels.utilities.ops import *
 
 """
 Original DenseNet: https://arxiv.org/abs/1608.06993
+
+@inproceedings{huang2017densely,
+  title={Densely connected convolutional networks},
+  author={Huang, Gao and Liu, Zhuang and Weinberger, Kilian Q and van der Maaten, Laurens},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  volume={1},
+  number={2},
+  pages={3},
+  year={2017}
+}
+
 Fully Convolutional DenseNet: https://arxiv.org/abs/1611.09326
 
-Implementation is loosely based on the above papers.
+@inproceedings{jegou2017one,
+  title={The one hundred layers tiramisu: Fully convolutional densenets for semantic segmentation},
+  author={J{\'e}gou, Simon and Drozdzal, Michal and Vazquez, David and Romero, Adriana and Bengio, Yoshua},
+  booktitle={Computer Vision and Pattern Recognition Workshops (CVPRW), 2017 IEEE Conference on},
+  pages={1175--1183},
+  year={2017},
+  organization={IEEE}
+}
+
 """
 class DenseNet(Segmentation):
     densenet_defaults={

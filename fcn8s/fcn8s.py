@@ -11,11 +11,24 @@ from tfmodels import ( batch_norm,
     linear,
     lrelu)
 
+"""
+Fully Convolutional Networks
+
+@inproceedings{long2015fully,
+  title={Fully convolutional networks for semantic segmentation},
+  author={Long, Jonathan and Shelhamer, Evan and Darrell, Trevor},
+  booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages={3431--3440},
+  year={2015}
+}
+
+"""
+
 class FCN(Segmentation):
     fcn_defaults={
         'k_size': [3, 3, 3, 3],
-        # 'conv_kernels': [64, 128, 256, 256, 512],
-        'conv_kernels': [32, 64, 128, 128, 256],
+        # 'conv_kernels': [64, 128, 256, 256, 512], ## Original dimensions
+        'conv_kernels': [32, 64, 128, 128, 256], ## Reduced dimensions by half
         'fc_dim': 2048,
         'use_optimizer': 'Adam',
         'name': 'fcn',

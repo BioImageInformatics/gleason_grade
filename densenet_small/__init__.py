@@ -1,1 +1,1 @@
-from densenet import (Training, Inference)
+from densenet_small import (Training, Inference)

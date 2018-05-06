@@ -73,6 +73,7 @@ def main(sess, slide_path, image_op, predict_op):
                 oversample_factor = OVERSAMPLE)
     svs.initialize_output('prob', dim=5, mode='tile')
     svs.print_info()
+    PREFETCH = min(len(svs.tile_list), 2048)
 
     def wrapped_fn(idx):
         coords = svs.tile_list[idx]
