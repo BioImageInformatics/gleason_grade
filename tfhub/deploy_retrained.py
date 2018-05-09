@@ -126,36 +126,41 @@ def main(sess, slide_path, image_op, predict_op):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path')
-    parser.add_argument('--slide')
+    parser.add_argument('--slide_dir')
     parser.add_argument('--out')
 
     args = parser.parse_args()
     model_path = args.model_path
-    slide_path = args.slide
+    slide_dir = args.slide_dir
     out_dir = args.out
     print(args)
+
+    print(slide_dir)
+    slide_list = glob.glob(os.path.join(slide_dir, '*.svs'))
+    print('Slide list: {}'.format(len(slide_list)))
 
     if not os.path.exists(out_dir):
         print('Making {}'.format(out_dir))
         os.makedirs(out_dir)
 
-    ramdisk_path = transfer_to_ramdisk(slide_path)
     with tf.Session(config=config) as sess:
 
-        try:
-            image_op , predict_op = get_input_output_ops(sess, model_path)
-            prob_img = main(sess, ramdisk_path, image_op, predict_op)
+        image_op , predict_op = get_input_output_ops(sess, model_path)
+        for slide_path in slide_list:
 
-            outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
-            outpath =  os.path.join(out_dir, outname_prob)
-            print('Writing {}'.format(outpath))
-            np.save(outpath, prob_img)
+            ramdisk_path = transfer_to_ramdisk(slide_path)
+            try:
+                prob_img = main(sess, ramdisk_path, image_op, predict_op)
+                outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
+                outpath =  os.path.join(out_dir, outname_prob)
+                print('Writing {}'.format(outpath))
+                np.save(outpath, prob_img)
 
-        except Exception as e:
-            print('Caught exception')
-            print(e.__doc__)
-            print(e.message)
+            except Exception as e:
+                print('Caught exception')
+                print(e.__doc__)
+                print(e.message)
 
-        finally:
-            os.remove(ramdisk_path)
-            print('Removed {}'.format(ramdisk_path))
+            finally:
+                os.remove(ramdisk_path)
+                print('Removed {}'.format(ramdisk_path))

@@ -10,9 +10,11 @@ model_path="snapshots/$model_name"
 
 svslist=$( ls $svs_dir/*svs )
 
-for svs in ${svslist[@]}; do
-  echo $svs $outdir
-  python ./deploy_retrained.py --model_path $model_path --slide $svs --out $outdir
-done
+#for svs in ${svslist[@]}; do
+#  echo $svs $outdir
+#  python ./deploy_retrained.py --model_path $model_path --slide $svs --out $outdir
+#done
+
+python ./deploy_retrained.py --model_path $model_path --slide $svs_dir --out $outdir
 
 # ls $svs_dir/*svs | shuf | parallel --jobs 2 "python deploy_retrained.py --model_path=$model_path --out=$outdir --slide={}"

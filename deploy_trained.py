@@ -35,8 +35,10 @@ def preprocess_fn(img):
 
 def prob_output(svs):
     probs = svs.output_imgs['prob']
+    ## Important to quantize to [0, 255] uint8!!
     probs *= 255.
-    return probs.astype(np.uint8)
+    probs = probs.astype(np.uint8)
+    return probs
     # return probs[:,:,:3]
 
 def rgb_output(svs):
@@ -63,7 +65,7 @@ def main(slide_path, model, sess, out_dir):
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
     svs.print_info()
-    PREFETCH = max(len(svs.place_list), 2048)
+    PREFETCH = min(len(svs.place_list), 1024)
 
     def wrapped_fn(idx):
         try:
@@ -105,6 +107,12 @@ def main(slide_path, model, sess, out_dir):
 
         except tf.errors.OutOfRangeError:
             print('Finished')
+            break
+
+        except Exception as e:
+            print('Caught exception at tiles {}'.format(idx_))
+            print(e.__doc__)
+            print(e.message)
             break
 
     dt = time.time()-tstart
