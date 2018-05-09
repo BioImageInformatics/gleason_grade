@@ -16,7 +16,7 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from densenet_small import Inference
+from unet import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -26,7 +26,7 @@ PROCESS_SIZE = 256
 OVERSAMPLE = 1.1
 BATCH_SIZE = 12
 PRINT_ITER = 1000
-SNAPSHOT_PATH = 'densenet_small/10x/snapshots/densenet.ckpt-30845'
+SNAPSHOT_PATH = 'unet/10x/snapshots/unet.ckpt-61690'
 RAM_DISK = '/dev/shm'
 
 def preprocess_fn(img):
@@ -35,7 +35,8 @@ def preprocess_fn(img):
 
 def prob_output(svs):
     probs = svs.output_imgs['prob']
-    return probs
+    probs *= 255.
+    return probs.astype(np.uint8)
     # return probs[:,:,:3]
 
 def rgb_output(svs):
@@ -56,16 +57,21 @@ def main(slide_path, model, sess, out_dir):
     svs = Slide(slide_path    = ramdisk_path,
                 preprocess_fn = preprocess_fn,
                 process_mag   = PROCESS_MAG,
-                process_size  = PROCESS_SIZE)
+                process_size  = PROCESS_SIZE,
+                verbose = True,
+                )
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
     svs.print_info()
     PREFETCH = max(len(svs.place_list), 2048)
 
     def wrapped_fn(idx):
-        coords = svs.tile_list[idx]
-        img = svs._read_tile(coords)
-        return img, idx
+        try:
+            coords = svs.tile_list[idx]
+            img = svs._read_tile(coords)
+            return img, idx
+        except:
+            return 0
 
     def read_region_at_index(idx):
         return tf.py_func(func = wrapped_fn,
@@ -75,7 +81,7 @@ def main(slide_path, model, sess, out_dir):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=4)
+    ds = ds.map(read_region_at_index, num_parallel_calls=8)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 
@@ -125,6 +131,15 @@ if __name__ == '__main__':
 
     slide_list = glob.glob(os.path.join(slide_dir, '*svs'))
     print('Working on {} slides from {}'.format(len(slide_list), slide_dir))
+
+    processed_list = glob.glob(os.path.join(out_dir, '*prob.npy'))
+    print('Found {} processed slides.'.format(len(processed_list)))
+    processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
+
+    slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
+    slide_base_list = zip(slide_base, slide_list)
+    slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
+    print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
