@@ -14,5 +14,11 @@ lrs=(0.0001 0.0001 0.0001)
 basedirs=('5x' '10x' '20x')
 
 for i in `seq 0 2`; do
-  python ./train.py ${batch_sizes[$i]} ${img_ratios[$i]} ${crop_sizes[$i]} ${epochs[$i]} ${lrs[$i]} ${basedirs[$i]}
+  python ./train.py \
+  --batch_size ${batch_sizes[$i]} \
+  --img_ratio ${img_ratios[$i]} \
+  --crop_size ${crop_sizes[$i]} \
+  --n_epochs ${epochs[$i]} \
+  --lr ${lrs[$i]} \
+  --basedir ${basedirs[$i]}
 done

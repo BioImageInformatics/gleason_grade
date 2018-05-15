@@ -57,20 +57,22 @@ def get_input_output_ops(sess, model_path):
 
 PROCESS_MAG = 10
 PREFETCH = 2048
-BATCH_SIZE = 4
+BATCH_SIZE = 6
 OVERSAMPLE = 1.25
 PRINT_ITER = 500
-def main(sess, slide_path, image_op, predict_op):
+def main(sess, ramdisk_path, image_op, predict_op):
     input_size = image_op.get_shape().as_list()
     print(input_size)
     x_size, y_size = input_size[1:3]
 
-    print('Working {}'.format(slide_path))
+    print('Working {}'.format(ramdisk_path))
     svs = Slide(slide_path    = ramdisk_path,
                 preprocess_fn = preprocess_fn,
                 process_mag   = PROCESS_MAG,
                 process_size  = x_size,
-                oversample_factor = OVERSAMPLE)
+                oversample_factor = OVERSAMPLE,
+                verbose = True
+                )
     svs.initialize_output('prob', dim=5, mode='tile')
     svs.print_info()
     PREFETCH = min(len(svs.tile_list), 2048)
@@ -88,7 +90,7 @@ def main(sess, slide_path, image_op, predict_op):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=8)
+    ds = ds.map(read_region_at_index, num_parallel_calls=12)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 

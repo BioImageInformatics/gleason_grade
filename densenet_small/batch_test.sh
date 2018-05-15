@@ -2,8 +2,8 @@
 
 set -e
 
-jpg=/home/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_jpg
-mask=/home/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_mask
+jpg=../data/val_jpg
+mask=../data/val_mask
 
 snapshot_dirs=( 5x/snapshots 10x/snapshots 20x/snapshots )
 

@@ -23,9 +23,9 @@ config.gpu_options.allow_growth = True
 
 PROCESS_MAG = 10
 PROCESS_SIZE = 256
-OVERSAMPLE = 1.1
+OVERSAMPLE = 1.2
 BATCH_SIZE = 12
-PRINT_ITER = 1000
+PRINT_ITER = 2500
 SNAPSHOT_PATH = 'unet/10x/snapshots/unet.ckpt-61690'
 RAM_DISK = '/dev/shm'
 
@@ -35,7 +35,7 @@ def preprocess_fn(img):
 
 def prob_output(svs):
     probs = svs.output_imgs['prob']
-    ## Important to quantize to [0, 255] uint8!!
+    ## quantize to [0, 255] uint8
     probs *= 255.
     probs = probs.astype(np.uint8)
     return probs
@@ -54,18 +54,18 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
     shutil.copyfile(src, dst)
     return dst
 
-def main(slide_path, model, sess, out_dir):
-    print('Working {}'.format(slide_path))
+
+def main(ramdisk_path, model, sess, out_dir):
+    print('Working {}'.format(ramdisk_path))
     svs = Slide(slide_path    = ramdisk_path,
                 preprocess_fn = preprocess_fn,
                 process_mag   = PROCESS_MAG,
                 process_size  = PROCESS_SIZE,
-                verbose = True,
+                verbose = False,
                 )
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
-    svs.print_info()
-    PREFETCH = min(len(svs.place_list), 1024)
+    PREFETCH = min(len(svs.place_list), 2048)
 
     def wrapped_fn(idx):
         try:
@@ -83,7 +83,7 @@ def main(slide_path, model, sess, out_dir):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=8)
+    ds = ds.map(read_region_at_index, num_parallel_calls=12)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 
@@ -107,22 +107,24 @@ def main(slide_path, model, sess, out_dir):
 
         except tf.errors.OutOfRangeError:
             print('Finished')
+            dt = time.time()-tstart
+            spt = dt / float(len(svs.tile_list))
+            print('\nFinished. {:2.2f}min {:3.3f}s/tile\n'.format(dt/60., spt))
+            print('\t {:3.3f} fps\n'.format(len(svs.tile_list) / dt))
+
+            svs.make_outputs()
+            prob_img = prob_output(svs)
+            rgb_img = rgb_output(svs)
             break
 
         except Exception as e:
             print('Caught exception at tiles {}'.format(idx_))
-            print(e.__doc__)
-            print(e.message)
+            # print(e.__doc__)
+            # print(e.message)
+            prob_img = None
+            rgb_img = None
             break
 
-    dt = time.time()-tstart
-    spt = dt / float(len(svs.tile_list))
-    print('\nFinished. {:2.2f}min {:3.3f}s/tile\n'.format(dt/60., spt))
-    print('\t {:3.3f} fps\n'.format(len(svs.tile_list) / dt))
-
-    svs.make_outputs()
-    prob_img = prob_output(svs)
-    rgb_img = rgb_output(svs)
     svs.close()
 
     return prob_img, rgb_img
@@ -140,7 +142,7 @@ if __name__ == '__main__':
     slide_list = glob.glob(os.path.join(slide_dir, '*svs'))
     print('Working on {} slides from {}'.format(len(slide_list), slide_dir))
 
-    processed_list = glob.glob(os.path.join(out_dir, '*prob.npy'))
+    processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
     print('Found {} processed slides.'.format(len(processed_list)))
     processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
 
@@ -152,13 +154,15 @@ if __name__ == '__main__':
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
         model = Inference(sess=sess, x_dims=[PROCESS_SIZE, PROCESS_SIZE, 3])
-        # model.print_info()
         model.restore(SNAPSHOT_PATH)
 
         for slide_path in slide_list:
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 prob_img, rgb_img = main(ramdisk_path, model, sess, out_dir)
+                if prob_img is None:
+                    raise Exception('Failed.')
+
                 outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
                 outname_rgb = os.path.basename(ramdisk_path).replace('.svs', '_rgb.jpg')
 
