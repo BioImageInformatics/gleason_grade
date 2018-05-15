@@ -16,7 +16,7 @@ basedirs=('5x' '10x' '20x')
 for i in `seq 0 2`; do
   python ./train.py \
   --batch_size ${batch_sizes[$i]} \
-  --img_ratio ${img_ratios[$i]} \
+  --image_ratio ${img_ratios[$i]} \
   --crop_size ${crop_sizes[$i]} \
   --n_epochs ${epochs[$i]} \
   --lr ${lrs[$i]} \

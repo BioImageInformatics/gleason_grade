@@ -123,15 +123,15 @@ if __name__ == '__main__':
     # basedir = sys.argv[6]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument( '--batch_size' , default=12 )
-    parser.add_argument( '--image_ratio', default=0.25 )
-    parser.add_argument( '--crop_size', default=512 )
-    parser.add_argument( '--n_epochs', default=200 )
-    parser.add_argument( '--lr', default=1e-4 )
-    parser.add_argument( '--basedir', default='trained' )
-    parser.add_argument( '--restore_path', default=None )
+    parser.add_argument( '--batch_size' , default=12 , type=int)
+    parser.add_argument( '--image_ratio', default=0.25 , type=float)
+    parser.add_argument( '--crop_size', default=512 , type=int)
+    parser.add_argument( '--n_epochs', default=200 , type=int)
+    parser.add_argument( '--lr', default=1e-4 , type=float)
+    parser.add_argument( '--basedir', default='trained' , type=str)
+    parser.add_argument( '--restore_path', default=None , type=str)
 
-    restore_path = '10x/snapshots/unet.ckpt-61690'
+    # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()
     batch_size = args.batch_size
     image_ratio = args.image_ratio
