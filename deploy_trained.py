@@ -16,7 +16,7 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from unet import Inference
+from unet_small import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -24,9 +24,8 @@ config.gpu_options.allow_growth = True
 PROCESS_MAG = 10
 PROCESS_SIZE = 256
 OVERSAMPLE = 1.2
-BATCH_SIZE = 12
-PRINT_ITER = 2500
-SNAPSHOT_PATH = 'unet/10x/snapshots/unet.ckpt-61690'
+BATCH_SIZE = 16
+PRINT_ITER = 500
 RAM_DISK = '/dev/shm'
 
 def preprocess_fn(img):
@@ -134,10 +133,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--slide_dir')
     parser.add_argument('--out')
+    parser.add_argument('--snapshot')
 
     args = parser.parse_args()
     slide_dir = args.slide_dir
     out_dir = args.out
+    snapshot = args.snapshot
 
     slide_list = glob.glob(os.path.join(slide_dir, '*svs'))
     print('Working on {} slides from {}'.format(len(slide_list), slide_dir))
@@ -154,7 +155,7 @@ if __name__ == '__main__':
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
         model = Inference(sess=sess, x_dims=[PROCESS_SIZE, PROCESS_SIZE, 3])
-        model.restore(SNAPSHOT_PATH)
+        model.restore(snapshot)
 
         for slide_path in slide_list:
             ramdisk_path = transfer_to_ramdisk(slide_path)
