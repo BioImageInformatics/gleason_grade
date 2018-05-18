@@ -164,6 +164,7 @@ class DenseNet(Segmentation):
             print('\t Bottleneck: ', dense_.get_shape())
 
             ## Upsampling path -- concat skip connections each time
+            self.upsample_list = []
             for i_, n_ in enumerate(reversed(self.dense_stacks[:-1])):
                 dense_ = self._transition_up(dense_, tu_num=i_, keep_prob=keep_prob)
 
@@ -172,6 +173,7 @@ class DenseNet(Segmentation):
 
                 dense_ = self._dense_block(dense_, n_, concat_input=False,
                     keep_prob=keep_prob, block_num=i_, name_scope='du')
+                self.upsample_list.append(dense_)
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))
