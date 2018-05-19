@@ -147,7 +147,7 @@ class DenseNet(Segmentation):
             ## First convolution gets the ball rolling with a pretty big filter
             dense_ = nonlin(conv(x_in, n_kernel=self.growth_rate*2, stride=2, k_size=5, var_scope='conv1'))
             dense_ = tf.nn.max_pool(dense_, [1,2,2,1], [1,2,2,1], padding='VALID', name='c1_pool')
-            self.conv_1 = tf.identity(dense_)
+            self.conv1 = tf.identity(dense_)
 
             ## Downsampling path
             self.downsample_list = []
@@ -173,17 +173,16 @@ class DenseNet(Segmentation):
             print('\t Bottleneck: ', dense_.get_shape())
 
             ## Upsampling path -- concat skip connections each time
+            self.upsample_list = []
             for i_, n_ in enumerate(reversed(self.dense_stacks[:-1])):
                 dense_ = self._transition_up(dense_, tu_num=i_, keep_prob=keep_prob)
 
-                # print('\t Concatenating ', self.downsample_list[-(i_+1)])
                 dense_ = tf.concat([dense_, self.downsample_list[-(i_+1)]],
                     axis=-1, name='concat_skip_{}'.format(i_))
-                # print('\t skip_{}: '.format(i_), dense_.get_shape())
 
                 dense_ = self._dense_block(dense_, n_, concat_input=False,
                     keep_prob=keep_prob, block_num=i_, name_scope='du')
-                # print('\t dense_up{}: '.format(i_), dense_.get_shape())
+                self.upsample_list.append(dense_)
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))

@@ -16,7 +16,7 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from unet_small import Inference
+from fcn8s_small import Inference
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -157,9 +157,12 @@ if __name__ == '__main__':
         model = Inference(sess=sess, x_dims=[PROCESS_SIZE, PROCESS_SIZE, 3])
         model.restore(snapshot)
 
-        for slide_path in slide_list:
+        times = {}
+        for slide_num, slide_path in enumerate(slide_list):
+            print('\n\n[\tSlide {}/{}\t]\n'.format(slide_num, len(slide_list)))
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
+                time_start = time.time()
                 prob_img, rgb_img = main(ramdisk_path, model, sess, out_dir)
                 if prob_img is None:
                     raise Exception('Failed.')
@@ -174,6 +177,7 @@ if __name__ == '__main__':
                 outpath =  os.path.join(out_dir, outname_rgb)
                 print('Writing {}'.format(outpath))
                 cv2.imwrite(outpath, rgb_img)
+                times[ramdisk_path] = (time.time() - time_start) / 60.
 
             except Exception as e:
                 print('Caught exception')
@@ -182,5 +186,17 @@ if __name__ == '__main__':
             finally:
                 os.remove(ramdisk_path)
                 print('Removed {}'.format(ramdisk_path))
+
+    time_record = os.path.join(out_dir, 'processing_time.txt')
+    print('Writing processing times to {}'.format(time_record))
+    times_all = []
+    with open(time_record, 'w+') as f:
+        for slide, tt in times.items():
+            times_all.append(tt)
+            f.write('{}\t{:3.5f}\n'.format(slide, tt))
+
+        times_mean = np.mean(times_all)
+        times_std = np.std(times_all)
+        f.write('Mean: {:3.4f} \t std: {:3.5f}\n'.format(times_mean, times_std))
 
     print('Done!')

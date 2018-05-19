@@ -1,13 +1,16 @@
 from __future__ import print_function
 import numpy as np
 import tensorflow as tf
-import sys, datetime, os, time
+import sys
+import os
+import time
+import argparse
 
 sys.path.insert(0, '../tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-from fcn8s import Training
+from fcn8s_small import Training
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -15,7 +18,7 @@ config.gpu_options.allow_growth = True
 train_record_path = '../data/gleason_grade_train.tfrecord'
 test_record_path =  '../data/gleason_grade_val.tfrecord'
 
-def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir):
+def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path=None):
     n_classes = 5
     # batch_size = 32
     # crop_size = 512
@@ -36,10 +39,8 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir):
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
         basedir=basedir, remove_old=False)
-    snapshot_path = None
 
     gamma = 1e-5
-    # lr_0 = 1e-4
     def learning_rate(lr_0, gamma, step):
         return lr_0 * np.exp(-gamma*step)
 
@@ -76,8 +77,8 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir):
             x_dims = x_dims)
         model.print_info()
 
-        if snapshot_path is not None:
-            model.restore(snapshot_path)
+        if restore_path is not None:
+            model.restore(restore_path)
 
         ## --------------------- Optimizing Loop -------------------- ##
         print('Start')
@@ -92,9 +93,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir):
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
                 for itx in xrange(iterations):
                     training_step += 1
-                    # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
-                    # model.train_step(lr=1e-4)
 
                 print('Epoch [{}] step [{}] time elapsed [{}]s'.format(
                     epx, model.global_step, time.time()-epoch_start))
@@ -116,11 +115,23 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir):
 
 
 if __name__ == '__main__':
-    batch_size = int(sys.argv[1])
-    image_ratio = float(sys.argv[2])
-    crop_size = int(sys.argv[3])
-    n_epochs = int(sys.argv[4])
-    lr_0 = float(sys.argv[5])
-    basedir = sys.argv[6]
+    parser = argparse.ArgumentParser()
+    parser.add_argument( '--batch_size' , default=12 , type=int)
+    parser.add_argument( '--image_ratio', default=0.25 , type=float)
+    parser.add_argument( '--crop_size', default=512 , type=int)
+    parser.add_argument( '--n_epochs', default=200 , type=int)
+    parser.add_argument( '--lr', default=1e-4 , type=float)
+    parser.add_argument( '--basedir', default='trained' , type=str)
+    parser.add_argument( '--restore_path', default=None , type=str)
 
-    main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir)
+    # restore_path = '10x/snapshots/unet.ckpt-61690'
+    args = parser.parse_args()
+    batch_size = args.batch_size
+    image_ratio = args.image_ratio
+    crop_size = args.crop_size
+    n_epochs = args.n_epochs
+    lr = args.lr
+    basedir = args.basedir
+    restore_path = args.restore_path
+
+    main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path)
