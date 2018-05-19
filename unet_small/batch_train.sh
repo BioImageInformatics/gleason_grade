@@ -2,11 +2,8 @@
 
 set -e
 
-# batch_sizes=(32 16 4)
-# img_ratios=(0.25 0.5 1.0)
-# basedirs=('5x' '10x' '20x')
-
-batch_sizes=(24 12 4)
+## FOV experiment
+batch_sizes=()
 img_ratios=(0.25 0.5 1.0)
 crop_sizes=(512 512 512)
 epochs=(200 200 200)

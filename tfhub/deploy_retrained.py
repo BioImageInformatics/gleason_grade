@@ -24,7 +24,8 @@ def preprocess_fn(img):
 
 def prob_output(svs):
     probs = svs.output_imgs['prob']
-    return probs
+    probs *= 255.
+    return probs.astype(np.uint8)
 
 def transfer_to_ramdisk(src, ramdisk = '/dev/shm'):
     base = os.path.basename(src)
