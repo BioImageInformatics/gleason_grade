@@ -126,24 +126,46 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
 
 OUTPUT_HEAD = 'SNAPSHOT\tG3_A\tG4_A\tG5_A\tBN_A\tST_A\tG3_F1\tG4_F1\tG5_F1\tBN_F1\tST_F1\tOVERALL_A\tOVERALL_F1\n'
 if __name__ == '__main__':
-    jpg_dir = sys.argv[1]
-    mask_dir = sys.argv[2]
-    snapshot = sys.argv[3]
-    mag = sys.argv[4]
-    if mag == '5':
-        crop = 512
-        resize = 0.25
-    elif mag == '10':
-        crop = 512
-        resize = 0.5
-    elif mag == '20':
-        crop = 512
-        resize = 1.
-    else:
-        print('Magnification (arg 4) invalid')
-        raise Exception
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--jpg_dir')
+    parser.add_argument('--mask_dir')
+    parser.add_argument('--snapshot')
+    parser.add_argument('--mag')
+    parser.add_argument('--outfile')
+    parser.add_argument('--experiment', default='FOV')
+    args = parser.parse_args()
 
-    outfile = sys.argv[5]
+    # jpg_dir = sys.argv[1]
+    # mask_dir = sys.argv[2]
+    # snapshot = sys.argv[3]
+    # mag = sys.argv[4]
+    if args.mag == '5':
+        if args.experiment == 'FOV':
+            crop = 1024
+            resize = 0.25
+        elif args.experiment == 'MAG':
+            crop = 512
+            resize = 0.25
+
+    elif args.mag == '10':
+        if args.experiment == 'FOV':
+            crop = 512
+            resize = 0.5
+        elif args.experiment == 'MAG':
+            crop = 512
+            resize = 0.5
+
+    elif args.mag == '20':
+        if args.experiment == 'FOV':
+            crop = 256
+            resize = 1.
+        elif args.experiment == 'MAG':
+            crop = 512
+            resize = 1.
+    else:
+        raise Exception('Magnification (--mag) invalid')
+
+    outfile = args.outfile
 
     if not os.path.exists(outfile):
         outfile = open(outfile, 'w+')
@@ -152,4 +174,4 @@ if __name__ == '__main__':
         outfile = open(outfile, 'a')
 
 
-    test_tiles(jpg_dir, mask_dir, snapshot, crop, resize, outfile)
+    test_tiles(args.jpg_dir, args.mask_dir, args.snapshot, crop, resize, outfile)

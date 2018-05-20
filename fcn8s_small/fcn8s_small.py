@@ -138,6 +138,22 @@ class FCN(Segmentation):
             y_hat = deconv(upscore0_fuse, self.n_classes, k_size=4, var_scope='y_hat')
             print('\t y_hat', y_hat.get_shape())
 
+            self.intermediate_ops = {
+                '01.c0_pool': c0_pool,
+                '02.c1_pool': c1_pool,
+                '03.c2_pool': c2_pool,
+                '04.c3_pool': c3_pool,
+                '05.c4_pool': c4_pool,
+                '06.prediction_0': prediction_0,
+                '07.prediction_1': prediction_1,
+                '08.prediction_2': prediction_2,
+                '09.prediction_3': prediction_3,
+                '10.upscore3': upscore3,
+                '11.upscore2': upscore2,
+                '12.upscore1': upscore1,
+                '13.upscore0': upscore0,
+                '14.y_hat': y_hat
+                }
             return y_hat
 
     ## Overload to fill in the default keep_prob

@@ -19,7 +19,13 @@ for i in `seq 0 3`; do
     echo $snap
     snap=${snap/.index/}
     echo $jpg $mask $snap $mag $output
-    python test.py $jpg $mask $snap $mag $output
+    python test.py \
+    --jpg_dir $jpg \
+    --mask_dir $mask \
+    --snapshot $snap \
+    --mag $mag \
+    --outfile $output \
+    --experiment FOV
 
   done
 done
