@@ -33,8 +33,8 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     test_epochs = 25
     step_start = 0
 
-    prefetch = 2048
-    threads = 8
+    prefetch = 1024
+    threads = 18
 
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(

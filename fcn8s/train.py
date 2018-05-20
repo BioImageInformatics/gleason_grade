@@ -29,13 +29,13 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
               3]
 
     iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
-    epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
+    epochs = n_epochs ## if epochs=500, then we get 500 * 10 sssssss= 2500 times over the data
     snapshot_epochs = 25
     test_epochs = 25
     step_start = 0
 
-    prefetch = 1500
-    threads = 8
+    prefetch = 2048
+    threads = 12
 
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
