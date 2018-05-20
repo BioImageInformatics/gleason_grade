@@ -16,15 +16,27 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
+<<<<<<< HEAD
 from densenet_small import Inference
+=======
+from densenet import Inference as densenet
+from densenet_small import Inference as densenet_s
+from fcn8s import Inference as fcn8s
+from fcn8s_small import Inference as fcn8s_s
+from unet import Inference as unet
+from unet_small import Inference as unet_s
+>>>>>>> 8294568b46c49f2ade33dbd0591f873f5e6d8b6a
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
+<<<<<<< HEAD
 PROCESS_MAG = 20
 PROCESS_SIZE = 512
 OVERSAMPLE = 1.2
 BATCH_SIZE = 4
+=======
+>>>>>>> 8294568b46c49f2ade33dbd0591f873f5e6d8b6a
 PRINT_ITER = 500
 RAM_DISK = '/dev/shm'
 
@@ -54,17 +66,20 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
     return dst
 
 
-def main(ramdisk_path, model, sess, out_dir):
+def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversample,
+         batch_size):
     print('Working {}'.format(ramdisk_path))
     svs = Slide(slide_path    = ramdisk_path,
                 preprocess_fn = preprocess_fn,
-                process_mag   = PROCESS_MAG,
-                process_size  = PROCESS_SIZE,
+                process_mag   = process_mag,
+                process_size  = process_size,
+                oversample    = oversample,
                 verbose = False,
                 )
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
     PREFETCH = min(len(svs.place_list), 2048)
+    svs.print_info()
 
     def wrapped_fn(idx):
         try:
@@ -84,7 +99,7 @@ def main(ramdisk_path, model, sess, out_dir):
         output_types=tf.int64)
     ds = ds.map(read_region_at_index, num_parallel_calls=12)
     ds = ds.prefetch(PREFETCH)
-    ds = ds.batch(BATCH_SIZE)
+    ds = ds.batch(batch_size)
 
     iterator = ds.make_one_shot_iterator()
     img, idx = iterator.get_next()
@@ -129,19 +144,49 @@ def main(ramdisk_path, model, sess, out_dir):
     return prob_img, rgb_img
 
 
+""" Return an inference class to use
+
+"""
+def get_model(model_type, sess, process_size):
+    x_dims = [process_size, process_size, 3]
+    if model_type == 'densenet':
+        model = densenet(sess=sess, x_dims=x_dims)
+    if model_type == 'densenet_s':
+        model = densenet_s(sess=sess, x_dims=x_dims)
+    if model_type == 'fcn8s':
+        model = fcn8s(sess=sess, x_dims=x_dims)
+    if model_type == 'fcn8s_s':
+        model = fcn8s_s(sess=sess, x_dims=x_dims)
+    if model_type == 'unet':
+        model = unet(sess=sess, x_dims=x_dims)
+    if model_type == 'unet_s':
+        model = unet_s(sess=sess, x_dims=x_dims)
+
+    return model
+
+
+
 if __name__ == '__main__':
+    PROCESS_MAG = 10
+    PROCESS_SIZE = 256
+    OVERSAMPLE = 1.1
+    BATCH_SIZE = 16
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--slide_dir')
-    parser.add_argument('--out')
-    parser.add_argument('--snapshot')
+    parser.add_argument('--model', default='fcn8s')
+    parser.add_argument('--out', default='fcn8s/10x_b/inference')
+    parser.add_argument('--snapshot', default='fcn8s/10x_b/snapshots/fcn.ckpt-41085')
+    parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
+    parser.add_argument('--mag', default=PROCESS_MAG, type=int)
+    parser.add_argument('--size', default=PROCESS_SIZE, type=int)
+    parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
 
     args = parser.parse_args()
-    slide_dir = args.slide_dir
     out_dir = args.out
-    snapshot = args.snapshot
 
-    slide_list = glob.glob(os.path.join(slide_dir, '*svs'))
-    print('Working on {} slides from {}'.format(len(slide_list), slide_dir))
+    slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
+    print('Working on {} slides from {}'.format(len(slide_list), args.slide_dir))
 
     processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
     print('Found {} processed slides.'.format(len(processed_list)))
@@ -154,8 +199,13 @@ if __name__ == '__main__':
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
-        model = Inference(sess=sess, x_dims=[PROCESS_SIZE, PROCESS_SIZE, 3])
-        model.restore(snapshot)
+        model = get_model(args.model, sess, args.size)
+        try:
+            model.restore(args.snapshot)
+        except:
+            raise Exception('Snapshot resotre failed. model={} snapshot={}'.format(
+                args.model, args.snapshot
+            ))
 
         times = {}
         for slide_num, slide_path in enumerate(slide_list):
@@ -163,7 +213,8 @@ if __name__ == '__main__':
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
-                prob_img, rgb_img = main(ramdisk_path, model, sess, out_dir)
+                prob_img, rgb_img =  main(ramdisk_path, model, sess, out_dir,
+                    args.mag, args.size, args.oversample, args.batch_size)
                 if prob_img is None:
                     raise Exception('Failed.')
 

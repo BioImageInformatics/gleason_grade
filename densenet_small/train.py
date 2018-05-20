@@ -30,11 +30,11 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
 
     iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
-    snapshot_epochs = 10
-    test_epochs = 10
+    snapshot_epochs = 25
+    test_epochs = 25
     step_start = 0
 
-    prefetch = 756
+    prefetch = 2048
     threads = 8
 
     # basedir = '5x'
@@ -128,7 +128,6 @@ if __name__ == '__main__':
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)
 
-    # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()
     batch_size = args.batch_size
     image_ratio = args.image_ratio

@@ -15,12 +15,15 @@ Scripts may be run from the root directory of this project, or from any of the s
 Most of the scripts rely on our `tfmodels` package for CNN models, or `svs_reader` package for efficient and extensible reading of SVS format whole slide images.
 
 ```
-pip install numpy opencv-contrib-python openslide-python tensorflow-gpu
+pip install numpy opencv-contrib-python openslide-python tensorflow-gpu pandas
 git clone https://github.com/BioImageInformatics/gleason_grade
 cd gleason_grade
 git clone https://github.com/BioImageInformatics/svs_reader
 git clone https://github.com/BioImageInformatics/tfmodels
 ```
+
+Tested on Ubuntu.
+
 
 ### Deploying a trained model
 Trained segmentation snapshots are available.

@@ -29,7 +29,7 @@ class FCN(Segmentation):
         'k_size': [3, 3, 3, 3],
         # 'conv_kernels': [64, 128, 256, 256, 512], ## Original dimensions
         'conv_kernels': [32, 32, 64, 128, 256], ## Reduced dimensions by half
-        'fc_dim': 2048,
+        'fc_dim': 1024,
         'use_optimizer': 'Adam',
         'name': 'fcn',
         'n_classes': 5,
@@ -56,7 +56,7 @@ class FCN(Segmentation):
             print('\t x_in', x_in.get_shape())
 
             c0_0 = nonlin(conv(x_in, self.conv_kernels[0], k_size=k_size[0], stride=1, var_scope='c0_0'))
-            c0_pool = tf.nn.max_pool(c0_0, [1,2,2,1], [1,2,2,1], padding='VALID',
+            c0_pool = tf.nn.max_pool(c0_0, [1,4,4,1], [1,4,4,1], padding='VALID',
                 name='c0_pool')
             print('\t c0_pool', c0_pool.get_shape()) ## in / 2
             self.conv1 = tf.identity(c0_pool)
@@ -76,7 +76,6 @@ class FCN(Segmentation):
                 name='c3_pool')
             print('\t c3_pool', c3_pool.get_shape())  ## in / 32
 
-            ## The actual architecture has one more level
             c4_0 = nonlin(conv(c3_pool, self.conv_kernels[4], k_size=3, stride=1, var_scope='c4_0'))
             c4_pool = tf.nn.max_pool(c4_0, [1,2,2,1], [1,2,2,1], padding='VALID',
                 name='c4_pool')
@@ -103,7 +102,6 @@ class FCN(Segmentation):
             prediction_2 = nonlin(conv(c2_pool, self.n_classes, stride=1, var_scope='pred2'))
             prediction_1 = nonlin(conv(c1_pool, self.n_classes, stride=1, var_scope='pred1'))
             prediction_0 = nonlin(conv(c0_pool, self.n_classes, stride=1, var_scope='pred0'))
-            # print('\t prediction_4', prediction_4.get_shape())
             print('\t prediction_3', prediction_3.get_shape())
             print('\t prediction_2', prediction_2.get_shape())
             print('\t prediction_1', prediction_1.get_shape())
@@ -138,6 +136,22 @@ class FCN(Segmentation):
             y_hat = deconv(upscore0_fuse, self.n_classes, k_size=4, var_scope='y_hat')
             print('\t y_hat', y_hat.get_shape())
 
+            self.intermediate_ops = {
+                '01.c0_pool': c0_pool,
+                '02.c1_pool': c1_pool,
+                '03.c2_pool': c2_pool,
+                '04.c3_pool': c3_pool,
+                '05.c4_pool': c4_pool,
+                '06.prediction_0': prediction_0,
+                '07.prediction_1': prediction_1,
+                '08.prediction_2': prediction_2,
+                '09.prediction_3': prediction_3,
+                '10.upscore3': upscore3,
+                '11.upscore2': upscore2,
+                '12.upscore1': upscore1,
+                '13.upscore0': upscore0,
+                '14.y_hat': y_hat
+                }
             return y_hat
 
     ## Overload to fill in the default keep_prob
