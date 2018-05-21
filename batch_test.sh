@@ -28,7 +28,7 @@ for dd in ${modeldirs[@]}; do
 
       echo $snap
       snap=${snap/.index/}
-      
+
       echo $jpg $mask $snap $mag $output
       python test.py \
       --jpg_dir $jpg \
