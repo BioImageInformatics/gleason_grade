@@ -56,7 +56,7 @@ class FCN(Segmentation):
             print('\t x_in', x_in.get_shape())
 
             c0_0 = nonlin(conv(x_in, self.conv_kernels[0], k_size=k_size[0], stride=1, var_scope='c0_0'))
-            c0_pool = tf.nn.max_pool(c0_0, [1,4,4,1], [1,4,4,1], padding='VALID',
+            c0_pool = tf.nn.max_pool(c0_0, [1,2,2,1], [1,2,2,1], padding='VALID',
                 name='c0_pool')
             print('\t c0_pool', c0_pool.get_shape()) ## in / 2
             self.conv1 = tf.identity(c0_pool)
@@ -77,7 +77,7 @@ class FCN(Segmentation):
             print('\t c3_pool', c3_pool.get_shape())  ## in / 32
 
             c4_0 = nonlin(conv(c3_pool, self.conv_kernels[4], k_size=3, stride=1, var_scope='c4_0'))
-            c4_pool = tf.nn.max_pool(c4_0, [1,2,2,1], [1,2,2,1], padding='VALID',
+            c4_pool = tf.nn.max_pool(c4_0, [1,4,4,1], [1,4,4,1], padding='VALID',
                 name='c4_pool')
             print('\t c4_pool', c4_pool.get_shape())  ## in / 64
 

@@ -58,9 +58,11 @@ def per_class_metrics(y_true_all, y_hat_all):
 
 
 def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR, outfile=open('result.tsv', 'a')):
+    print('Looking for jpg in {}'.format(jpg_dir))
     jpg_patt = os.path.join(jpg_dir, '*.jpg')
     jpg_list = sorted(glob.glob(jpg_patt))
 
+    print('Looking for masks in {}'.format(mask_dir))
     mask_patt = os.path.join(mask_dir, '*.png')
     mask_list = sorted(glob.glob(mask_patt))
 
