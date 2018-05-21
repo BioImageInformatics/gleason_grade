@@ -11,7 +11,7 @@ lrs=(0.0001 0.0001 0.0001)
 basedirs=('5x_FOV' '10x_FOV' '20x_FOV')
 
 # cd into the model directory
-cd densenet_small
+cd fcn8s_small
 
 for i in `seq 0 2`; do
   python ./train.py \
