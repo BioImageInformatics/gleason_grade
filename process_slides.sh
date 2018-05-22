@@ -5,48 +5,40 @@ set -e
 #svsdir=/media/ing/D/svs/TCGA_PRAD
 
 # svsdir=/media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/slide_data/CEDARS_PRAD/
-svsdir=/media/ing/D/svs/TCGA_PRAD/
+# svsdir=/media/ing/D/svs/TCGA_PRAD/
+svsdir=data/durham_validation
 
 outdir=(
-fcn8s_small/5x_FOV/inference
-fcn8s_small/10x_FOV/inference
-fcn8s_small/20x_FOV/inference
-unet_small/5x_FOV/inference
-unet_small/10x_FOV/inference
+densenet/5x/inference
+densenet/10x/inference
+densenet/20x/inference
+densenet/5x_FOV/inference
+densenet/10x_FOV/inference
+densenet/20x_FOV/inference
 )
 
 snapshot=(
-fcn8s_small/5x_FOV/snapshots/fcn.ckpt-30845
-fcn8s_small/10x_FOV/snapshots/fcn.ckpt-61845
-fcn8s_small/20x_FOV/snapshots/fcn.ckpt-116095
-unet_small/5x_FOV/snapshots/unet.ckpt-24875
-unet_small/10x_FOV/snapshots/unet.ckpt-49875
+densenet/5x/snapshots/densenet.ckpt-30845
+densenet/10x/snapshots/densenet.ckpt-61690
+densenet/20x/snapshots/densenet.ckpt-200000
+densenet/5x_FOV/snapshots/densenet.ckpt-30845
+densenet/10x_FOV/snapshots/densenet.ckpt-61845
+densenet/20x_FOV/snapshots/densenet.ckpt-116095
 )
 
-models=(
-fcn8s_s
-fcn8s_s
-fcn8s_s
-unet_s
-unet_s
-)
+mags=( 5 10 20 5 10 20 )
 
-mags=(
-5
-10
-20
-5
-10
-)
+sizes=( 128 256 512 256 256 256 )
+
+batches=( 16 8 2 8 8 8 )
 
 for i in `seq 0 ${#outdir[@]}`; do
-  echo ${outdir[$i]} ${snapshot[$i]}
   python ./deploy_trained.py \
   --slide_dir $svsdir \
-  --model ${models[$i]} \
+  --model densenet \
   --out ${outdir[$i]} \
   --snapshot ${snapshot[$i]} \
-  --batch_size 12 \
+  --batch_size ${batches[$i]} \
   --mag ${mags[$i]} \
-  --size 256
+  --size ${sizes[$i]}
 done

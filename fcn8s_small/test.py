@@ -56,7 +56,7 @@ def per_class_metrics(y_true_all, y_hat_all):
     return accuracies + f1
 
 
-def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR, outfile=open('result.tsv', 'a')):
+def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR, outfile=None):
     jpg_patt = os.path.join(jpg_dir, '*.jpg')
     jpg_list = sorted(glob.glob(jpg_patt))
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     parser.add_argument('--outfile')
     parser.add_argument('--experiment', default='FOV')
     args = parser.parse_args()
-    
+
     if args.mag == '5':
         if args.experiment == 'FOV':
             crop = 1024
@@ -166,3 +166,4 @@ if __name__ == '__main__':
 
 
     test_tiles(args.jpg_dir, args.mask_dir, args.snapshot, crop, resize, outfile)
+    outfile.close()

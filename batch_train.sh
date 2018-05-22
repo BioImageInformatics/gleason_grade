@@ -3,12 +3,12 @@
 set -e
 
 # FOV experiment
-batch_sizes=(32 32 32)
+batch_sizes=(24 12 4)
 img_ratios=(0.25 0.5 1.0)
-crop_sizes=(1024 512 256)
-epochs=(200 400 750)
+crop_sizes=(512 512 512)
+epochs=(200 200 200)
 lrs=(0.0001 0.0001 0.0001)
-basedirs=('5x_FOV' '10x_FOV' '20x_FOV')
+basedirs=('5x' '10x' '20x')
 
 # cd into the model directory
 cd fcn8s_small

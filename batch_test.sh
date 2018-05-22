@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+#set -e
 
 jpg=../data/val_jpg
 mask=../data/val_mask
@@ -12,14 +12,14 @@ mags=( 5 10 20 )
 output=test_log_MAG.tsv
 
 modeldirs=(
-densenet
-densenet_small
 fcn8s
+fcn8s_small
 unet
 unet_small
 )
 
 for dd in ${modeldirs[@]}; do
+
   cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
   for i in `seq 0 3`; do
     snapshots=$( ls ${snapshot_dirs[$i]}/*index )

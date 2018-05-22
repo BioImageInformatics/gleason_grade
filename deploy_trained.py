@@ -16,27 +16,18 @@ sys.path.insert(0, 'tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
-<<<<<<< HEAD
-from densenet_small import Inference
-=======
+
 from densenet import Inference as densenet
 from densenet_small import Inference as densenet_s
 from fcn8s import Inference as fcn8s
 from fcn8s_small import Inference as fcn8s_s
 from unet import Inference as unet
 from unet_small import Inference as unet_s
->>>>>>> 8294568b46c49f2ade33dbd0591f873f5e6d8b6a
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-<<<<<<< HEAD
-PROCESS_MAG = 20
-PROCESS_SIZE = 512
-OVERSAMPLE = 1.2
-BATCH_SIZE = 4
-=======
->>>>>>> 8294568b46c49f2ade33dbd0591f873f5e6d8b6a
+
 PRINT_ITER = 500
 RAM_DISK = '/dev/shm'
 
@@ -188,6 +179,10 @@ if __name__ == '__main__':
     slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
     print('Working on {} slides from {}'.format(len(slide_list), args.slide_dir))
 
+    if not os.path.exists(out_dir):
+        print('Creating {}'.format(out_dir))
+        os.makedirs(out_dir)
+
     processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
     print('Found {} processed slides.'.format(len(processed_list)))
     processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
@@ -248,6 +243,6 @@ if __name__ == '__main__':
 
         times_mean = np.mean(times_all)
         times_std = np.std(times_all)
-        f.write('Mean: {:3.4f} \t std: {:3.5f}\n'.format(times_mean, times_std))
+        f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(times_mean, times_std))
 
     print('Done!')
