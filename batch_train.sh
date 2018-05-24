@@ -3,15 +3,15 @@
 set -e
 
 # FOV experiment
-batch_sizes=(8 8 8)
+batch_sizes=(12 8 6)
 img_ratios=(0.25 0.5 1.0)
-crop_sizes=(1024 512 256)
-epochs=(200 400 750)
+crop_sizes=(512 512 512)
+epochs=(200 200 200)
 lrs=(0.001 0.001 0.001)
-basedirs=('5x_FOV' '10x_FOV' '20x_FOV')
+basedirs=('5x' '10x' '20x')
 
 # cd into the model directory
-cd unet
+cd unet_small
 
 for i in `seq 0 2`; do
   python ./train.py \

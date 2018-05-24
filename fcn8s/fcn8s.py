@@ -92,13 +92,16 @@ class FCN(Segmentation):
             fc_1 = nonlin(conv(c4_pool, self.fc_dim, k_size=kern_size, stride=kern_size, var_scope='fc_1'))
             fc_1 = tf.contrib.nn.alpha_dropout(fc_1, keep_prob=keep_prob)
             print('\t fc_1', fc_1.get_shape())  ##
+            self.bottleneck = tf.identity(fc_1)
 
             fc_2 = nonlin(conv(fc_1, self.fc_dim, k_size=1, stride=1, var_scope='fc_2'))
             fc_2 = tf.contrib.nn.alpha_dropout(fc_2, keep_prob=keep_prob)
             print('\t fc_2', fc_2.get_shape())  ##
+            self.bottleneck2 = tf.identity(fc_2)
 
             score_fr = conv(fc_2, self.n_classes, stride=1, var_scope='score_fr')
             print('\t score_fr', score_fr.get_shape())  ##
+            self.bottleneck3 = tf.identity(score_fr)
 
             ## Upscoring
             # prediction_4 = nonlin(conv(c4_pool, self.n_classes, stride=1, var_scope='pred4'))

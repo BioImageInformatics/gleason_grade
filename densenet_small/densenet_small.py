@@ -162,6 +162,7 @@ class DenseNet(Segmentation):
                 keep_prob=keep_prob, block_num=len(self.dense_stacks)-1)
             dense_ = tf.contrib.nn.alpha_dropout(dense_, keep_prob=keep_prob)
             self.intermediate_ops['{:02d}. Bottleneck'.format(op_idx)] = dense_; op_idx += 1
+            self.bottleneck = dense_
 
             print('\t Bottleneck: ', dense_.get_shape())
 
@@ -180,7 +181,7 @@ class DenseNet(Segmentation):
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))
-            self.intermediate_ops['{:02d}. y_hat_0'.format(op_idx)] = dense_; op_idx += 1 
+            self.intermediate_ops['{:02d}. y_hat_0'.format(op_idx)] = dense_; op_idx += 1
             y_hat = deconv(y_hat_0, n_kernel=self.n_classes, k_size=5, pad='SAME', var_scope='y_hat')
 
         return y_hat
