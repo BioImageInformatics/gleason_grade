@@ -7,15 +7,12 @@ mask=../data/val_mask
 # jpg=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_jpg
 # mask=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_mask
 
-snapshot_dirs=( 5x/snapshots 10x/snapshots 20x/snapshots )
+snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
 mags=( 5 10 20 )
-output=test_log_MAG.tsv
+output=test_log_FOV.tsv
 
 modeldirs=(
-fcn8s
 fcn8s_small
-unet
-unet_small
 )
 
 for dd in ${modeldirs[@]}; do
@@ -26,17 +23,15 @@ for dd in ${modeldirs[@]}; do
     mag=${mags[$i]}
     for snap in ${snapshots[@]}; do
 
-      echo $snap
-      snap=${snap/.index/}
+      snapshot=${snap/.index/} # replaces .index with a blank string
 
-      echo $jpg $mask $snap $mag $output
       python test.py \
       --jpg_dir $jpg \
       --mask_dir $mask \
-      --snapshot $snap \
+      --snapshot $snapshot \
       --mag $mag \
       --outfile $output \
-      --experiment MAG
+      --experiment FOV
 
     done
   done
