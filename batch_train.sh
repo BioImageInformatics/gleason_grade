@@ -3,7 +3,7 @@
 set -e
 
 # FOV experiment
-batch_sizes=(12 12 12)
+batch_sizes=(8 8 8)
 img_ratios=(0.25 0.5 1.0)
 crop_sizes=(1024 512 256)
 epochs=(200 400 750)

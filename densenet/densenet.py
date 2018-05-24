@@ -139,6 +139,7 @@ class DenseNet(Segmentation):
         nonlin = self.nonlin
         print('Non-linearity:', nonlin)
 
+        self.intermediate_ops = {}; op_idx = 1
         with tf.variable_scope(self.name) as scope:
             if reuse:
                 scope.reuse_variables()
@@ -147,7 +148,7 @@ class DenseNet(Segmentation):
             ## First convolution gets the ball rolling with a pretty big filter
             dense_ = nonlin(conv(x_in, n_kernel=self.growth_rate*2, stride=2, k_size=5, var_scope='conv1'))
             dense_ = tf.nn.max_pool(dense_, [1,2,2,1], [1,2,2,1], padding='VALID', name='c1_pool')
-            self.conv1 = tf.identity(dense_)
+            self.intermediate_ops['{:02d}. Conv1'.format(op_idx)] = dense_; op_idx += 1
 
             ## Downsampling path
             self.downsample_list = []
@@ -158,17 +159,13 @@ class DenseNet(Segmentation):
                 # print('\t DENSE: ', dense_.get_shape())
 
                 dense_ = self._transition_down(dense_, i_, keep_prob=keep_prob)
-
-
-            # print("DOWNSAMPLING LIST:")
-            # for ds_ in self.downsample_list:
-            #     print(ds_)
+                self.intermediate_ops['{:02d}. Down{}'.format(op_idx, i_)] = dense_; op_idx += 1
 
             ## bottleneck dense layer
             dense_ = self._dense_block(dense_, self.dense_stacks[-1],
                 keep_prob=keep_prob, block_num=len(self.dense_stacks)-1)
             dense_ = tf.contrib.nn.alpha_dropout(dense_, keep_prob=keep_prob)
-            self.bottleneck = tf.identity(dense_)
+            self.intermediate_ops['{:02d}. Bottleneck'.format(op_idx)] = dense_; op_idx += 1
 
             print('\t Bottleneck: ', dense_.get_shape())
 
@@ -183,10 +180,11 @@ class DenseNet(Segmentation):
                 dense_ = self._dense_block(dense_, n_, concat_input=False,
                     keep_prob=keep_prob, block_num=i_, name_scope='du')
                 self.upsample_list.append(dense_)
+                self.intermediate_ops['{:02d}. Up{}'.format(op_idx, i_)] = dense_; op_idx += 1
 
             ## Classifier layer
             y_hat_0 = nonlin(deconv(dense_, n_kernel=self.growth_rate*4, k_size=5, pad='SAME', var_scope='y_hat_0'))
-            self.y_hat_0 = tf.identity(y_hat_0)
+            self.intermediate_ops['{:02d}. y_hat_0'.format(op_idx)] = dense_; op_idx += 1 
             y_hat = deconv(y_hat_0, n_kernel=self.n_classes, k_size=5, pad='SAME', var_scope='y_hat')
 
         return y_hat
