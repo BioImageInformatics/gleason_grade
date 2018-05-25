@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -e
+# set -e
 
 jpg=../data/val_jpg
 mask=../data/val_mask
@@ -12,7 +12,7 @@ mags=( 5 10 20 )
 output=test_log_FOV.tsv
 
 modeldirs=(
-fcn8s_small
+fcn8s
 )
 
 for dd in ${modeldirs[@]}; do
