@@ -70,7 +70,6 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
     PREFETCH = min(len(svs.place_list), 2048)
-    svs.print_info()
 
     def wrapped_fn(idx):
         try:
@@ -114,8 +113,9 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
             print('Finished')
             dt = time.time()-tstart
             spt = dt / float(len(svs.tile_list))
+            fps = len(svs.tile_list) / dt
             print('\nFinished. {:2.2f}min {:3.3f}s/tile\n'.format(dt/60., spt))
-            print('\t {:3.3f} fps\n'.format(len(svs.tile_list) / dt))
+            print('\t {:3.3f} fps\n'.format(fps))
 
             svs.make_outputs()
             prob_img = prob_output(svs)
@@ -132,7 +132,7 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
 
     svs.close()
 
-    return prob_img, rgb_img
+    return prob_img, rgb_img, fps
 
 
 """ Return an inference class to use
@@ -203,12 +203,13 @@ if __name__ == '__main__':
             ))
 
         times = {}
+        fpss = {}
         for slide_num, slide_path in enumerate(slide_list):
             print('\n\n[\tSlide {}/{}\t]\n'.format(slide_num, len(slide_list)))
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
-                prob_img, rgb_img =  main(ramdisk_path, model, sess, out_dir,
+                prob_img, rgb_img, fps =  main(ramdisk_path, model, sess, out_dir,
                     args.mag, args.size, args.oversample, args.batch_size)
                 if prob_img is None:
                     raise Exception('Failed.')
@@ -224,6 +225,7 @@ if __name__ == '__main__':
                 print('Writing {}'.format(outpath))
                 cv2.imwrite(outpath, rgb_img)
                 times[ramdisk_path] = (time.time() - time_start) / 60.
+                fpss[ramdisk_path] = fps
 
             except Exception as e:
                 print('Caught exception')
@@ -234,6 +236,7 @@ if __name__ == '__main__':
                 print('Removed {}'.format(ramdisk_path))
 
     time_record = os.path.join(out_dir, 'processing_time.txt')
+    fps_record = os.path.join(out_dir, 'processing_fps.txt')
     print('Writing processing times to {}'.format(time_record))
     times_all = []
     with open(time_record, 'w+') as f:
@@ -244,5 +247,16 @@ if __name__ == '__main__':
         times_mean = np.mean(times_all)
         times_std = np.std(times_all)
         f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(times_mean, times_std))
+
+    fps_all = []
+    print('Writing processing FPS to {}'.format(fps_record))
+    with open(fps_record, 'w+') as f:
+        for slide, tt in fpss.items():
+            fps_all.append(tt)
+            f.write('{}\t{:3.5f}\n'.format(slide, tt))
+
+        fps_mean = np.mean(fps_all)
+        fps_std = np.std(fps_all)
+        f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(fps_mean, fps_std))
 
     print('Done!')
