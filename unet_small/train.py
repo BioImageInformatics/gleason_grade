@@ -70,7 +70,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             log_dir = log_dir,
             save_dir = save_dir,
             summary_iters = 100,
-            summary_image_iters = iterations,
+            summary_image_iters = iterations*5,
             summary_image_n = 4,
             max_to_keep = 20,
             # summarize_grads = True,
