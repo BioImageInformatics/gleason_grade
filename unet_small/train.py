@@ -33,7 +33,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     test_epochs = 25
     step_start = 0
 
-    prefetch = 1500
+    prefetch = 1024
     threads = 8
 
     # basedir = '5x'

@@ -12,12 +12,14 @@ mags=( 5 10 20 )
 output=test_log_FOV.tsv
 
 modeldirs=(
-fcn8s
+fcn8s_small
 )
 
 for dd in ${modeldirs[@]}; do
 
-  cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
+  # cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
+  cd /home/ing/projects/gleason_grade/$dd
+  pwd
   for i in `seq 0 3`; do
     snapshots=$( ls ${snapshot_dirs[$i]}/*index )
     mag=${mags[$i]}
@@ -35,6 +37,5 @@ for dd in ${modeldirs[@]}; do
 
     done
   done
-  pwd
 
 done
