@@ -9,33 +9,33 @@ set -e
 svsdir=data/durham_validation
 
 outdir=(
-fcn8s/5x/inference
-fcn8s/10x/inference
-fcn8s/20x/inference
-fcn8s/5x_FOV/inference
-fcn8s/10x_FOV/inference
-fcn8s/20x_FOV/inference
+unet_small/5x/inference
+unet_small/10x/inference
+unet_small/20x/inference
+unet_small/5x_FOV/inference
+unet_small/10x_FOV/inference
+unet_small/20x_FOV/inference
 )
 
 snapshot=(
-fcn8s/5x/snapshots/fcn.ckpt-10500
-fcn8s/10x/snapshots/fcn.ckpt-82585
-fcn8s/20x/snapshots/fcn.ckpt-237500
-fcn8s/5x_FOV/snapshots/fcn.ckpt-23250
-fcn8s/10x_FOV/snapshots/fcn.ckpt-54250
-fcn8s/20x_FOV/snapshots/fcn.ckpt-112375
+unet_small/5x/snapshots/unet.ckpt-15500
+unet_small/10x/snapshots/unet.ckpt-76875
+unet_small/20x/snapshots/unet.ckpt-134875
+unet_small/5x_FOV/snapshots/unet.ckpt-30845
+unet_small/10x_FOV/snapshots/unet.ckpt-42625
+unet_small/20x_FOV/snapshots/unet.ckpt-58125
 )
 
 mags=( 5 10 20 5 10 20 )
 
 sizes=( 128 256 512 256 256 256 )
 
-batches=( 12 8 2 8 8 8 )
+batches=( 16 12 4 12 12 12 )
 
 for i in `seq 0 ${#outdir[@]}`; do
   python ./deploy_trained.py \
   --slide_dir $svsdir \
-  --model fcn8s \
+  --model unet_s \
   --out ${outdir[$i]} \
   --snapshot ${snapshot[$i]} \
   --batch_size ${batches[$i]} \
