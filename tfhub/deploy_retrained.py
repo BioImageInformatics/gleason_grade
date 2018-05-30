@@ -154,12 +154,13 @@ if __name__ == '__main__':
     slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
     print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
+    print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
         image_op , predict_op = get_input_output_ops(sess, model_path)
         times = {}
         fpss = {}
-        for slide_path in slide_list:
-
+        for slide_num, slide_path in enumerate(slide_list):
+            print('\n\n[\tSlide {}/{}\t]\n'.format(slide_num, len(slide_list)))
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
