@@ -25,6 +25,19 @@ def load_prediction(pred, argmax=True):
     pred = np.argmax(pred, axis=-1)
     return pred
 
+""" load lists
+List out the matching file paths.
+
+Args:
+prediciton_dir: base directory for predictions
+label_dir: base directory for labels
+prediction_patt: file pattern to glob for inside prediction_dir
+label_patt: file pattern to glob for inside label_dir
+
+Returns:
+prediction_list:
+label_list
+"""
 def load_lists(prediction_dir, label_dir, prediction_patt, label_patt):
     prediction_list = sorted(glob.glob(os.path.join(
         prediction_dir, prediction_patt )))
@@ -146,4 +159,5 @@ if __name__ == '__main__':
     prediction_list, label_list = load_lists(prediction_dir, label_dir,
         prediction_patt, label_patt)
 
-    main(prediction_list, label_list)
+    outfile = os.path.join(prediction_dir, 'performance.csv')
+    main(prediction_list, label_list, outfile)

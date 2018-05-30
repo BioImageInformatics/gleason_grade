@@ -57,9 +57,8 @@ def get_input_output_ops(sess, model_path):
     return image_op, predict_op
 
 PROCESS_MAG = 10
-PREFETCH = 2048
-BATCH_SIZE = 6
-OVERSAMPLE = 1.25
+BATCH_SIZE = 36
+OVERSAMPLE = 1.35
 PRINT_ITER = 500
 def main(sess, ramdisk_path, image_op, predict_op):
     input_size = image_op.get_shape().as_list()
@@ -71,12 +70,12 @@ def main(sess, ramdisk_path, image_op, predict_op):
                 preprocess_fn = preprocess_fn,
                 process_mag   = PROCESS_MAG,
                 process_size  = x_size,
-                oversample_factor = OVERSAMPLE,
+                oversample    = OVERSAMPLE,
                 verbose = True
                 )
     svs.initialize_output('prob', dim=5, mode='tile')
     svs.print_info()
-    PREFETCH = min(len(svs.tile_list), 2048)
+    PREFETCH = min(len(svs.tile_list), 1024)
 
     def wrapped_fn(idx):
         coords = svs.tile_list[idx]
@@ -118,13 +117,14 @@ def main(sess, ramdisk_path, image_op, predict_op):
 
     dt = time.time()-tstart
     spt = dt / float(len(svs.tile_list))
+    fps = len(svs.tile_list) / dt
     print('\nFinished. {:2.2f}min {:3.3f}s/tile\n'.format(dt/60., spt))
-    print('\t {:3.3f} fps\n'.format(len(svs.tile_list) / dt))
+    print('\t {:3.3f} fps\n'.format(fps))
 
     prob_img = prob_output(svs)
     svs.close()
 
-    return prob_img
+    return prob_img, fps
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -146,18 +146,31 @@ if __name__ == '__main__':
         print('Making {}'.format(out_dir))
         os.makedirs(out_dir)
 
-    with tf.Session(config=config) as sess:
+    processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
+    print('Found {} processed slides.'.format(len(processed_list)))
+    processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
+    slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
+    slide_base_list = zip(slide_base, slide_list)
+    slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
+    print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
+    with tf.Session(config=config) as sess:
         image_op , predict_op = get_input_output_ops(sess, model_path)
+        times = {}
+        fpss = {}
         for slide_path in slide_list:
 
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
-                prob_img = main(sess, ramdisk_path, image_op, predict_op)
+                time_start = time.time()
+                prob_img, fps = main(sess, ramdisk_path, image_op, predict_op)
                 outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
                 outpath =  os.path.join(out_dir, outname_prob)
                 print('Writing {}'.format(outpath))
                 np.save(outpath, prob_img)
+
+                times[ramdisk_path] = (time.time() - time_start) / 60.
+                fpss[ramdisk_path] = fps
 
             except Exception as e:
                 print('Caught exception')
@@ -167,3 +180,27 @@ if __name__ == '__main__':
             finally:
                 os.remove(ramdisk_path)
                 print('Removed {}'.format(ramdisk_path))
+
+    time_record = os.path.join(out_dir, 'processing_time.txt')
+    fps_record = os.path.join(out_dir, 'processing_fps.txt')
+    print('Writing processing times to {}'.format(time_record))
+    times_all = []
+    with open(time_record, 'w+') as f:
+        for slide, tt in times.items():
+            times_all.append(tt)
+            f.write('{}\t{:3.5f}\n'.format(slide, tt))
+
+        times_mean = np.mean(times_all)
+        times_std = np.std(times_all)
+        f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(times_mean, times_std))
+
+    fps_all = []
+    print('Writing processing FPS to {}'.format(fps_record))
+    with open(fps_record, 'w+') as f:
+        for slide, tt in fpss.items():
+            fps_all.append(tt)
+            f.write('{}\t{:3.5f}\n'.format(slide, tt))
+
+        fps_mean = np.mean(fps_all)
+        fps_std = np.std(fps_all)
+        f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(fps_mean, fps_std))

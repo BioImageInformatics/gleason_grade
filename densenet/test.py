@@ -118,7 +118,7 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
         metric_str += '{}\t'.format(metric)
 
     metric_str += '{}\t'.format(accuracy_score(y_true_all, y_hat_all))
-    metric_str += '{}\n'.format(f1_score(y_true_all, y_hat_all, average='macro'))
+    metric_str += '{}\n'.format(f1_score(y_true_all, y_hat_all, average='weighted'))
     output_str = '{}\t'.format(snapshot) + metric_str
     print(output_str)
     outfile.write(output_str)
