@@ -57,7 +57,7 @@ def get_input_output_ops(sess, model_path):
     return image_op, predict_op
 
 PROCESS_MAG = 10
-BATCH_SIZE = 36
+BATCH_SIZE = 6
 OVERSAMPLE = 1.35
 PRINT_ITER = 500
 def main(sess, ramdisk_path, image_op, predict_op):
