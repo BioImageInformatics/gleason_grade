@@ -2,7 +2,11 @@
 *.ckpt*
 *.npy
 *.pyc
+*.tar.gz
+
+
 */logs/*
 */snapshots/*
 */events.*
 */inference/*
+
