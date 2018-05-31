@@ -7,18 +7,20 @@ mask=../data/val_mask
 # jpg=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_jpg
 # mask=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_mask
 
-snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
-mags=( 5 10 20 )
+# snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
+# mags=( 5 10 20 )
+snapshot_dirs=( 10x_FOV/snapshots )
+mags=( 10 )
 output=test_log_FOV.tsv
 
 modeldirs=(
-fcn8s_small
+unet
 )
 
 for dd in ${modeldirs[@]}; do
 
-  # cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
-  cd /home/ing/projects/gleason_grade/$dd
+  cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
+  # cd /home/ing/projects/gleason_grade/$dd
   pwd
   for i in `seq 0 3`; do
     snapshots=$( ls ${snapshot_dirs[$i]}/*index )
