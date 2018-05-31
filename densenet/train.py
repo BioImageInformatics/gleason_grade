@@ -16,8 +16,8 @@ from densenet import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train.tfrecord'
-test_record_path =  '../data/gleason_grade_val.tfrecord'
+train_record_path = '../data/gleason_grade_train_ext.tfrecord'
+test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
     n_classes = 5
@@ -28,13 +28,13 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
               int(crop_size*image_ratio),
               3]
 
-    iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
+    iterations = (2500/batch_size)*5  ## Define epoch as 10 passes over the data
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
-    snapshot_epochs = 10
-    test_epochs = 10
+    snapshot_epochs = 25
+    test_epochs = 25
     step_start = 0
 
-    prefetch = 756
+    prefetch = 2048
     threads = 8
 
     # basedir = '5x'
@@ -70,7 +70,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             learning_rate = lr_0,
             log_dir = log_dir,
             save_dir = save_dir,
-            summary_iters = 100,
+            summary_iters = 200,
             summary_image_iters = iterations,
             summary_image_n = 4,
             max_to_keep = 20,
