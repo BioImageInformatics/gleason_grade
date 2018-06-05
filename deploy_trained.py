@@ -69,7 +69,7 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
                 )
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
-    PREFETCH = min(len(svs.place_list), 2048)
+    PREFETCH = min(len(svs.place_list), 1024)
 
     def wrapped_fn(idx):
         try:
