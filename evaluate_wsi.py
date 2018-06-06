@@ -45,14 +45,23 @@ def load_lists(prediction_dir, label_dir, prediction_patt, label_patt):
     pred_base = [os.path.basename(x).replace('_prob.npy', '') for x in prediction_list]
     label_list = [os.path.join(label_dir, '{}.png'.format(x)) for x in pred_base]
 
+    matching_prediction = []
+    matching_label = []
     for p, l in zip(prediction_list, label_list):
         if not os.path.exists(p):
-            raise Exception('{} does not exist.'.format(p))
+            print('{} does not exist.'.format(p))
+            # raise Exception('{} does not exist.'.format(p))
         if not os.path.exists(l):
-            raise Exception('{} does not exist.'.format(p))
+            print('{} does not exist.'.format(l))
+            # raise Exception('{} does not exist.'.format(l))
         else:
-            print(p ,l)
-    return prediction_list, label_list
+            # print(p ,l)
+            matching_prediction.append(p)
+            matching_label.append(l)
+
+    print('Returning list of {} matching predictions + labels'.format(len(
+        matching_prediction )))
+    return matching_prediction, matching_label
 
 def resize_label_2_pred(label, pred):
     x_, y_ = pred.shape[:2]
@@ -85,20 +94,22 @@ def main(prediction_list, label_list, outfile='wsi_result.csv'):
         ## each slide can have more than one label
         present_labels = np.unique(label)
         for L in present_labels:
-            print('\tLabel: {}'.format(L))
             if L == 255:
                 continue
 
             stats_out['Slide'].append(slide_name)
-            stats_out['Label'].append(L)
 
             ## pull out predictions overlapping the label
             label_flat = label.flatten()
-            label_ = label_flat[label_flat==L]
             pred_flat = pred.flatten()
             pred_ = pred_flat[label_flat==L]
 
-            print('\tLabel:')
+            ## Reassing GG5 --> High Grade
+            if L == 3:
+                L = 2
+                pred_[pred_ == 3] = 2
+
+            print('\tLabel: {}'.format(L))
             label_size = (label==L).sum().astype(np.float32)
             print('\t> Class {}: {}'.format(LABEL_CODE[L], label_size))
             stats_out['LabelSize'].append(label_size)
@@ -107,8 +118,7 @@ def main(prediction_list, label_list, outfile='wsi_result.csv'):
             pred_not_stroma = pred_ != 4
             stroma_area = (pred_ == 4).sum()
             stats_out['PredST'].append(stroma_area)
-            print('\tPredicted {} stroma'.format(stroma_area))
-            label_ = label_[pred_not_stroma]
+            print('\tREMOVING {} stroma'.format(stroma_area))
             pred_ = pred_[pred_not_stroma]
 
             print('\tPrediction:')
@@ -131,6 +141,7 @@ def main(prediction_list, label_list, outfile='wsi_result.csv'):
             maj_percent = pred_count[maj_pred] / pred_count.sum().astype(np.float32)
             print('\t######## Majority: {} ({:3.3f}%)\n'.format(LABEL_CODE[maj_pred], maj_percent))
 
+            stats_out['Label'].append(L)
             stats_out['Majority'].append(maj_pred)
             stats_out['MajorityPct'].append(maj_percent)
 
