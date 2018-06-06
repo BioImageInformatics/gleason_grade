@@ -45,7 +45,7 @@ class UNet(Segmentation):
         super(UNet, self).__init__(**unet_defaults)
 
     def model(self, x_in, keep_prob=0.5, reuse=False, training=True):
-        print('DenseNet Model')
+        print('UNet - Small Model')
         nonlin = self.nonlin
         print('Non-linearity:', nonlin)
 

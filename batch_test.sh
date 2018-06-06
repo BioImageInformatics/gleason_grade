@@ -9,9 +9,9 @@ mask=../data/val_mask
 
 # snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
 # mags=( 5 10 20 )
-snapshot_dirs=( 10x_FOV/snapshots )
-mags=( 10 )
-output=test_log_FOV.tsv
+snapshot_dirs=( 20x/snapshots )
+mags=( 20 )
+output=test_log_MAG.tsv
 
 modeldirs=(
 unet
@@ -35,7 +35,7 @@ for dd in ${modeldirs[@]}; do
       --snapshot $snapshot \
       --mag $mag \
       --outfile $output \
-      --experiment FOV
+      --experiment MAG
 
     done
   done

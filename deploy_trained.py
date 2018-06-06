@@ -166,8 +166,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--slide_dir')
     parser.add_argument('--model', default='fcn8s')
-    parser.add_argument('--out', default='fcn8s/10x_b/inference')
-    parser.add_argument('--snapshot', default='fcn8s/10x_b/snapshots/fcn.ckpt-41085')
+    parser.add_argument('--out', default='fcn8s/10x/inference')
+    parser.add_argument('--snapshot', default='fcn8s/10x/snapshots/fcn.ckpt-41085')
     parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
     parser.add_argument('--mag', default=PROCESS_MAG, type=int)
     parser.add_argument('--size', default=PROCESS_SIZE, type=int)
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         try:
             model.restore(args.snapshot)
         except:
-            raise Exception('Snapshot resotre failed. model={} snapshot={}'.format(
+            raise Exception('Snapshot restore failed. model={} snapshot={}'.format(
                 args.model, args.snapshot
             ))
 

@@ -9,34 +9,33 @@ set -e
 svsdir=data/validation_svs
 
 outdir=(
-densenet_small/5x/inference
-# unet_small/10x/inference
-# unet_small/20x/inference
-# unet_small/5x_FOV/inference
-# unet_small/10x_FOV/inference
-# unet_small/20x_FOV/inference
+unet/5x/inference
+unet/10x/inference
+unet/20x/inference
+unet/5x_FOV/inference
+unet/10x_FOV/inference
+unet/20x_FOV/inference
 )
 
 snapshot=(
-densenet_small/5x/snapshots/densenet.ckpt-11250
-# unet_small/5x/snapshots/unet.ckpt-15500
-# unet_small/10x/snapshots/unet.ckpt-76875
-# unet_small/20x/snapshots/unet.ckpt-134875
-# unet_small/5x_FOV/snapshots/unet.ckpt-30845
-# unet_small/10x_FOV/snapshots/unet.ckpt-42625
-# unet_small/20x_FOV/snapshots/unet.ckpt-58125
+unet/5x/snapshots/unet.ckpt-29450
+unet/10x/snapshots/unet.ckpt-61690
+unet/20x/snapshots/unet.ckpt-248750
+unet/5x_FOV/snapshots/unet.ckpt-58900
+unet/10x_FOV/snapshots/unet.ckpt-35875
+unet/20x_FOV/snapshots/unet.ckpt-149650
 )
 
 mags=( 5 10 20 5 10 20 )
 
 sizes=( 128 256 512 256 256 256 )
 
-batches=( 16 12 4 12 12 12 )
+batches=( 16 10 2 10 10 10 )
 
 for i in `seq 0 ${#outdir[@]}`; do
   python ./deploy_trained.py \
   --slide_dir $svsdir \
-  --model densenet_s \
+  --model unet \
   --out ${outdir[$i]} \
   --snapshot ${snapshot[$i]} \
   --batch_size ${batches[$i]} \

@@ -3,13 +3,13 @@ import glob, os, shutil, sys, re
 import numpy as np
 
 
-JPG_PATT = './jpg/*.jpg'
-MASK_PATT = './mask/*.png'
+JPG_PATT = './jpg_ext/*.jpg'
+MASK_PATT = './mask_ext/*.png'
 
-TRAIN_JPG = './train_jpg'
-TRAIN_MASK = './train_mask'
-VAL_JPG = './val_jpg'
-VAL_MASK = './val_mask'
+TRAIN_JPG = './train_jpg_ext'
+TRAIN_MASK = './train_mask_ext'
+VAL_JPG = './val_jpg_ext'
+VAL_MASK = './val_mask_ext'
 
 VAL_PCT = 0.2
 
