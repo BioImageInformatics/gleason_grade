@@ -9,21 +9,21 @@ set -e
 svsdir=data/validation_svs
 
 outdir=(
-fcn8s_small/5x/inference
-fcn8s_small/10x/inference
-fcn8s_small/20x/inference
-fcn8s_small/5x_FOV/inference
-fcn8s_small/10x_FOV/inference
-fcn8s_small/20x_FOV/inference
+unet_small/5x/inference
+unet_small/10x/inference
+unet_small/20x/inference
+unet_small/5x_FOV/inference
+unet_small/10x_FOV/inference
+unet_small/20x_FOV/inference
 )
 
 snapshot=(
-fcn8s_small/5x/snapshots/fcn.ckpt-26865
-fcn8s_small/10x/snapshots/fcn.ckpt-25625
-fcn8s_small/20x/snapshots/fcn.ckpt-82585
-fcn8s_small/5x_FOV/snapshots/fcn.ckpt-40795
-fcn8s_small/10x_FOV/snapshots/fcn.ckpt-51250
-fcn8s_small/20x_FOV/snapshots/fcn.ckpt-81795
+unet_small/5x/snapshots/unet.ckpt-15500
+unet_small/10x/snapshots/unet.ckpt-76875
+unet_small/20x/snapshots/unet.ckpt-134875
+unet_small/5x_FOV/snapshots/unet.ckpt-30845
+unet_small/10x_FOV/snapshots/unet.ckpt-42625
+unet_small/20x_FOV/snapshots/unet.ckpt-58125
 )
 
 mags=( 5 10 20 5 10 20 )
@@ -35,7 +35,7 @@ batches=( 20 16 6 16 16 16 )
 for i in `seq 0 ${#outdir[@]}`; do
   python ./deploy_trained.py \
   --slide_dir $svsdir \
-  --model fcn8s_s \
+  --model unet_s \
   --out ${outdir[$i]} \
   --snapshot ${snapshot[$i]} \
   --batch_size ${batches[$i]} \
