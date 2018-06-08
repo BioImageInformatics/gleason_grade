@@ -2,19 +2,19 @@
 
 # set -e
 
-jpg=../data/val_jpg
-mask=../data/val_mask
+jpg=../data/val_jpg_ext
+mask=../data/val_mask_ext
 # jpg=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_jpg
 # mask=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_mask
 
 # snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
 # mags=( 5 10 20 )
-snapshot_dirs=( 20x/snapshots )
-mags=( 20 )
-output=test_log_MAG.tsv
+snapshot_dirs=( extended_10x/snapshots )
+mags=( 10 )
+output=test_log_exended.tsv
 
 modeldirs=(
-unet
+densenet_small
 )
 
 for dd in ${modeldirs[@]}; do
