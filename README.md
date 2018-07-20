@@ -55,8 +55,6 @@ gleason_grade
     |__ test_retrained.py (13)
     |__ run_retrain.sh (14)
     |__ run_deploy.sh (15)
-|__ classifiers
-    |__ W.I.P.
 
 ```
 1. A directory with source training images
@@ -74,3 +72,10 @@ gleason_grade
 13. Run a test on retrained Hub classifiers
 14. Utility script to hold options for retraining
 15. Utility script to hold options for deploy
+
+### Tutorials
+
+1. Creating data from image / mask pairs
+2. Training a segmentation network using `tfmodels`
+3. Validating performance on image / mask pairs
+4. Applying the model to a whole slide `svs` image
