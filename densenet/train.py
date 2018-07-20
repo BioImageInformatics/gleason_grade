@@ -21,14 +21,11 @@ test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
     n_classes = 5
-    # batch_size = 32
-    # crop_size = 512
-    # image_ratio = 0.25
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
               3]
 
-    iterations = (2500/batch_size)*5  ## Define epoch as 10 passes over the data
+    iterations = 2200  ## Define epoch length
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
     snapshot_epochs = 25
     test_epochs = 25
@@ -37,12 +34,10 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     prefetch = 2048
     threads = 8
 
-    # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
         basedir=basedir, remove_old=False)
 
     gamma = 1e-5
-    # lr_0 = 1e-5
     def learning_rate(lr_0, gamma, step):
         return lr_0 * np.exp(-gamma*step)
 
@@ -94,9 +89,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
                 for itx in xrange(iterations):
                     training_step += 1
-                    # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
-                    # model.train_step(lr=1e-4)
 
                 print('Epoch [{}] step [{}] time elapsed [{}]s'.format(
                     epx, model.global_step, time.time()-epoch_start))
@@ -127,7 +120,6 @@ if __name__ == '__main__':
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)
 
-    # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()
     batch_size = args.batch_size
     image_ratio = args.image_ratio

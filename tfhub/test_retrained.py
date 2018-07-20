@@ -45,6 +45,9 @@ def get_input_output_ops(sess, model_path):
 def class_image_list(img_dir, class_num):
     class_image_path = os.path.join(img_dir, '{}'.format(class_num), '*.jpg')
     class_image_list = sorted(glob.glob(class_image_path))
+    if len(class_image_list) == 0:
+        print('Class {} (dir {}) no contents'.format(class_num, img_dir))
+        return []
     return class_image_list
 
 
@@ -66,6 +69,15 @@ def test_list(class_images, sess, image_op, predict_op):
 NUM_CLASSES = 5
 def main(img_dir, sess, image_op, predict_op):
     image_lists = {x: class_image_list(img_dir, x) for x in range(NUM_CLASSES)}
+
+    # Rearrange for empty GG5:
+    image_lists_non_empty = {}
+    image_lists_non_empty[0] = image_lists[0]
+    image_lists_non_empty[1] = image_lists[1]
+    image_lists_non_empty[2] = image_lists[3]
+    image_lists_non_empty[3] = image_lists[4]
+    image_lists = image_lists_non_empty            
+
     class_predictions = {}
     class_accuracy = {}
     y_trues = {}
@@ -84,7 +96,7 @@ def main(img_dir, sess, image_op, predict_op):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', default='snapshots/inception_v3')
-    parser.add_argument('--val_dir', default='../data/tfhub_val')
+    parser.add_argument('--val_dir', default='../data/tfhub_ext_val')
     parser.add_argument('--out_file', default='result.tsv')
 
     args = parser.parse_args()

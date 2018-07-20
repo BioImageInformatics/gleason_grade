@@ -19,12 +19,9 @@ config.gpu_options.allow_growth = True
 
 CROP_SIZE = 1024
 RESIZE_FACTOR = 0.25
-# SNAPSHOT = '5x/snapshots/densenet.ckpt-77345'
 
 def compare_tile(y_true_vect, y_hat_vect):
-
     accuracy = accuracy_score(y_true_vect, y_hat_vect)
-
     return accuracy
 
 
@@ -69,7 +66,6 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
     for jpg, mask in zip(jpg_list, mask_list):
         jpg_base = os.path.basename(jpg).replace('.jpg', '')
         mask_base = os.path.basename(mask).replace('.png', '')
-        # print(jpg, mask)
         assert jpg_base == mask_base, '{} mismatch {}'.format(jpg, mask)
     print('Test files passed agreement check (n = {})'.format(len(jpg_list)))
 

@@ -20,9 +20,6 @@ test_record_path =  '../data/gleason_grade_val.tfrecord'
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path=None):
     n_classes = 5
-    # batch_size = 32
-    # crop_size = 512
-    # image_ratio = 0.25
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
               3]
@@ -36,7 +33,6 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     prefetch = 1000
     threads = 8
 
-    # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
         basedir=basedir, remove_old=False)
 
@@ -124,7 +120,6 @@ if __name__ == '__main__':
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)
 
-    # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()
     batch_size = args.batch_size
     image_ratio = args.image_ratio

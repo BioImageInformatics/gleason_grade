@@ -41,13 +41,11 @@ def prob_output(svs):
     probs *= 255.
     probs = probs.astype(np.uint8)
     return probs
-    # return probs[:,:,:3]
 
 def rgb_output(svs):
     rgb = svs.output_imgs['rgb']
     rgb += 1.0
     rgb *= (255. / 2.)
-    # print 'fixed: ', rgb.shape, rgb.dtype, rgb.min(), rgb.max()
     return rgb[:,:,::-1]
 
 def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
@@ -64,12 +62,12 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
                 preprocess_fn = preprocess_fn,
                 process_mag   = process_mag,
                 process_size  = process_size,
-                oversample    = oversample,
+                oversample_factor = oversample,
                 verbose = False,
                 )
     svs.initialize_output('prob', dim=5)
     svs.initialize_output('rgb', dim=3)
-    PREFETCH = min(len(svs.place_list), 1024)
+    PREFETCH = min(len(svs.place_list), 2048)
 
     def wrapped_fn(idx):
         try:
@@ -87,9 +85,9 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=12)
-    ds = ds.prefetch(PREFETCH)
+    ds = ds.map(read_region_at_index, num_parallel_calls=8)
     ds = ds.batch(batch_size)
+    ds = ds.prefetch(PREFETCH)
 
     iterator = ds.make_one_shot_iterator()
     img, idx = iterator.get_next()
@@ -104,7 +102,7 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
             svs.place_batch(output, idx_, 'prob')
             svs.place_batch(tile, idx_, 'rgb')
 
-            n_processed += BATCH_SIZE
+            n_processed += batch_size
             if n_processed % PRINT_ITER == 0:
                 print('[{:06d}] elapsed time [{:3.3f}]'.format(
                     n_processed, time.time() - tstart ))
@@ -124,8 +122,6 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
 
         except Exception as e:
             print('Caught exception at tiles {}'.format(idx_))
-            # print(e.__doc__)
-            # print(e.message)
             prob_img = None
             rgb_img = None
             break
@@ -160,7 +156,7 @@ def get_model(model_type, sess, process_size):
 if __name__ == '__main__':
     PROCESS_MAG = 10
     PROCESS_SIZE = 256
-    OVERSAMPLE = 1.1
+    OVERSAMPLE = 1.25
     BATCH_SIZE = 16
 
     parser = argparse.ArgumentParser()
