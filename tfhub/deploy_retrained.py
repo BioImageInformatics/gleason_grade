@@ -57,11 +57,10 @@ def get_input_output_ops(sess, model_path):
     return image_op, predict_op
 
 PROCESS_MAG = 10
-BATCH_SIZE = 12
-OVERSAMPLE = 1.25
+BATCH_SIZE = 6
+OVERSAMPLE = 1.35
 PRINT_ITER = 500
-N_CLASSES = 4
-def process_slide(sess, ramdisk_path, image_op, predict_op):
+def main(sess, ramdisk_path, image_op, predict_op):
     input_size = image_op.get_shape().as_list()
     print(input_size)
     x_size, y_size = input_size[1:3]
@@ -71,11 +70,12 @@ def process_slide(sess, ramdisk_path, image_op, predict_op):
                 preprocess_fn = preprocess_fn,
                 process_mag   = PROCESS_MAG,
                 process_size  = x_size,
-                oversample_factor    = OVERSAMPLE,
-                verbose = False
+                oversample    = OVERSAMPLE,
+                verbose = True
                 )
-    svs.initialize_output('prob', dim=4, mode='tile')
-    PREFETCH = min(len(svs.tile_list), 512)
+    svs.initialize_output('prob', dim=5, mode='tile')
+    svs.print_info()
+    PREFETCH = min(len(svs.tile_list), 1024)
 
     def wrapped_fn(idx):
         coords = svs.tile_list[idx]
@@ -90,7 +90,7 @@ def process_slide(sess, ramdisk_path, image_op, predict_op):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=6)
+    ds = ds.map(read_region_at_index, num_parallel_calls=12)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
-                prob_img, fps = process_slide(sess, ramdisk_path, image_op, predict_op)
+                prob_img, fps = main(sess, ramdisk_path, image_op, predict_op)
                 outname_prob = os.path.basename(ramdisk_path).replace('.svs', '_prob.npy')
                 outpath =  os.path.join(out_dir, outname_prob)
                 print('Writing {}'.format(outpath))

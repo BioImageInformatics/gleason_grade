@@ -19,9 +19,12 @@ config.gpu_options.allow_growth = True
 
 CROP_SIZE = 1024
 RESIZE_FACTOR = 0.25
+# SNAPSHOT = '5x/snapshots/densenet.ckpt-77345'
 
 def compare_tile(y_true_vect, y_hat_vect):
+
     accuracy = accuracy_score(y_true_vect, y_hat_vect)
+
     return accuracy
 
 
@@ -66,6 +69,7 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
     for jpg, mask in zip(jpg_list, mask_list):
         jpg_base = os.path.basename(jpg).replace('.jpg', '')
         mask_base = os.path.basename(mask).replace('.png', '')
+        # print(jpg, mask)
         assert jpg_base == mask_base, '{} mismatch {}'.format(jpg, mask)
     print('Test files passed agreement check (n = {})'.format(len(jpg_list)))
 
@@ -81,6 +85,7 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
         model.restore(snapshot)
 
         for idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
+            # print('{:04d}'.format(idx), jpg, mask)
             tile_name = os.path.basename(jpg).replace('.jpg', '')
             indices.append(tile_name)
             img = cv2.imread(jpg)[:,:,::-1]
@@ -98,6 +103,13 @@ def test_tiles(jpg_dir, mask_dir, snapshot, crop=CROP_SIZE, resize=RESIZE_FACTOR
             y_true_all = np.concatenate([y_true_all, y_true_vect], axis=0)
 
             aggregate_metrics.append(compare_tile(y_true_vect, y_hat_vect))
+
+    # aggregated_metrics = pd.DataFrame(aggregate_metrics, index=indices,
+    #     columns=['Accuracy'])
+    # confmat = confusion_matrix(y_true_all, y_hat_all)
+    # class_report = classification_report(y_true_all, y_hat_all, digits=4)
+    # print(confmat)
+    # print(class_report)
 
     metrics = per_class_metrics(y_true_all, y_hat_all)
     metric_str = ''
@@ -123,6 +135,10 @@ if __name__ == '__main__':
     parser.add_argument('--experiment', default='FOV')
     args = parser.parse_args()
 
+    # jpg_dir = sys.argv[1]
+    # mask_dir = sys.argv[2]
+    # snapshot = sys.argv[3]
+    # mag = sys.argv[4]
     if args.mag == '5':
         if args.experiment == 'FOV':
             crop = 1024
@@ -156,6 +172,7 @@ if __name__ == '__main__':
         outfile.write(OUTPUT_HEAD)
     else:
         outfile = open(outfile, 'a')
+
 
     test_tiles(args.jpg_dir, args.mask_dir, args.snapshot, crop, resize, outfile)
     outfile.close()
