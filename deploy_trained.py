@@ -57,17 +57,45 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
     return dst
 
 
-def process_slide(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversample,
-         batch_size):
-    print('Working {}'.format(ramdisk_path))
-    svs = Slide(slide_path    = ramdisk_path,
+def process_slide(slide_path, model, sess, out_dir, process_mag, 
+                  process_size, oversample, batch_size, n_classes):
+    """ Process a slide
+
+    Args:
+    slide_path: str
+        absolute or relative path to svs formatted slide
+    model: tfmodels.SegmentationBasemodel object
+        model definition to use. Weights must be restored first, 
+        i.e. call model.restore() before passing model
+    sess: tf.Session
+    out_dir: str
+        path to use for output
+    process_mag: int
+        Usually one of: 5, 10, 20, 40.
+        Other values may work but have not been tested
+    process_size: int
+        The input size required by model. 
+    oversample: float. Usually in [1., 2.]
+        How much to oversample between tiles. Larger values 
+        will increase processing time.
+    batch_size: int
+        The batch size for inference. If the batch size is too 
+        large given the model and process_size, then OOM errors
+        will be raised
+    n_classes: int
+        The number of classes output by model. 
+        i.e. shape(model.yhat) = (batch, h, w, n_classes)
+    """
+    
+    print('Working {}'.format(slide_path))
+    svs = Slide(slide_path    = slide_path,
                 preprocess_fn = preprocess_fn,
                 process_mag   = process_mag,
                 process_size  = process_size,
                 oversample    = oversample,
                 verbose = False,
                 )
-    svs.initialize_output('prob', dim=5)
+    svs.initialize_output('prob', dim=n_classes)
     svs.initialize_output('rgb', dim=3)
     PREFETCH = min(len(svs.place_list), 1024)
 
@@ -135,10 +163,10 @@ def process_slide(ramdisk_path, model, sess, out_dir, process_mag, process_size,
     return prob_img, rgb_img, fps
 
 
-""" Return an inference class to use
+def _get_model(model_type, sess, process_size):
+    """ Return a model instance to use 
 
-"""
-def get_model(model_type, sess, process_size):
+    """
     x_dims = [process_size, process_size, 3]
     if model_type == 'densenet':
         model = densenet(sess=sess, x_dims=x_dims)
@@ -177,7 +205,7 @@ def main(args):
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
-        model = get_model(args.model, sess, args.size)
+        model = _get_model(args.model, sess, args.size)
         try:
             model.restore(args.snapshot)
         except:
@@ -193,7 +221,7 @@ def main(args):
             try:
                 time_start = time.time()
                 prob_img, rgb_img, fps =  process_slide(ramdisk_path, model, sess, out_dir,
-                    args.mag, args.size, args.oversample, args.batch_size)
+                    args.mag, args.size, args.oversample, args.batch_size, args.n_classes)
                 if prob_img is None:
                     raise Exception('Failed.')
 
@@ -249,17 +277,19 @@ if __name__ == '__main__':
     PROCESS_MAG = 10
     PROCESS_SIZE = 256
     OVERSAMPLE = 1.1
-    BATCH_SIZE = 16
+    BATCH_SIZE = 4
+    N_CLASSES = 5
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--slide_dir')
-    parser.add_argument('--model', default='fcn8s')
-    parser.add_argument('--out', default='fcn8s/10x/inference')
-    parser.add_argument('--snapshot', default='fcn8s/10x/snapshots/fcn.ckpt-41085')
+    parser.add_argument('--model', default='densenet')
+    parser.add_argument('--out', default='densenet/10x/inference')
+    parser.add_argument('--snapshot', default='densenet/10x/snapshots/densenet.ckpt-41085')
     parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
     parser.add_argument('--mag', default=PROCESS_MAG, type=int)
     parser.add_argument('--size', default=PROCESS_SIZE, type=int)
     parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
+    parser.add_argument('--n_classes', default=N_CLASSES, type=int)
 
     args = parser.parse_args()
     main(args)
