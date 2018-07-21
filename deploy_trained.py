@@ -57,7 +57,7 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
     return dst
 
 
-def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversample,
+def process_slide(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversample,
          batch_size):
     print('Working {}'.format(ramdisk_path))
     svs = Slide(slide_path    = ramdisk_path,
@@ -156,24 +156,7 @@ def get_model(model_type, sess, process_size):
     return model
 
 
-
-if __name__ == '__main__':
-    PROCESS_MAG = 10
-    PROCESS_SIZE = 256
-    OVERSAMPLE = 1.1
-    BATCH_SIZE = 16
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--slide_dir')
-    parser.add_argument('--model', default='fcn8s')
-    parser.add_argument('--out', default='fcn8s/10x/inference')
-    parser.add_argument('--snapshot', default='fcn8s/10x/snapshots/fcn.ckpt-41085')
-    parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
-    parser.add_argument('--mag', default=PROCESS_MAG, type=int)
-    parser.add_argument('--size', default=PROCESS_SIZE, type=int)
-    parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
-
-    args = parser.parse_args()
+def main(args):
     out_dir = args.out
 
     slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
@@ -209,7 +192,7 @@ if __name__ == '__main__':
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
-                prob_img, rgb_img, fps =  main(ramdisk_path, model, sess, out_dir,
+                prob_img, rgb_img, fps =  process_slide(ramdisk_path, model, sess, out_dir,
                     args.mag, args.size, args.oversample, args.batch_size)
                 if prob_img is None:
                     raise Exception('Failed.')
@@ -260,3 +243,23 @@ if __name__ == '__main__':
         f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(fps_mean, fps_std))
 
     print('Done!')
+
+if __name__ == '__main__':
+    # Defaults
+    PROCESS_MAG = 10
+    PROCESS_SIZE = 256
+    OVERSAMPLE = 1.1
+    BATCH_SIZE = 16
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--slide_dir')
+    parser.add_argument('--model', default='fcn8s')
+    parser.add_argument('--out', default='fcn8s/10x/inference')
+    parser.add_argument('--snapshot', default='fcn8s/10x/snapshots/fcn.ckpt-41085')
+    parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
+    parser.add_argument('--mag', default=PROCESS_MAG, type=int)
+    parser.add_argument('--size', default=PROCESS_SIZE, type=int)
+    parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
+
+    args = parser.parse_args()
+    main(args)
