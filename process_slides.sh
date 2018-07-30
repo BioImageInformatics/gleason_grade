@@ -5,21 +5,21 @@ set -e
 svsdir=data/validation_svs
 
 outdir=(
-densenet_small/ext_75pct/inference
+densenet/ext_5x/inference
 )
 
 snapshot=(
-densenet_small/ext_75pct/snapshots/densenet.ckpt-99000
+densenet/ext_5x/snapshots/densenet.ckpt-355669
 )
 
-mags=( 10 )
-sizes=( 256)
+mags=( 5 )
+sizes=( 256 )
 batches=( 8 )
 
 for i in `seq 0 ${#outdir[@]}`; do
   python ./deploy_trained.py \
   --slide_dir $svsdir \
-  --model densenet_s \
+  --model densenet \
   --out ${outdir[$i]} \
   --snapshot ${snapshot[$i]} \
   --batch_size ${batches[$i]} \
