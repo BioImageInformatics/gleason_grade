@@ -6,7 +6,10 @@ set -e
 svs_dir=../data/validation_svs
 
 model_names=(
-mobilenet_v2_050_224_50pct
+inception_v3
+nasnet_large
+mobilenet_v2_050_224
+resnet_v2_152
 )
 
 for model_name in ${model_names[@]}; do

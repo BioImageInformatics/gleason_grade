@@ -16,30 +16,34 @@ from densenet_small import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-TRAIN_RECORD_PATH = '../data/gleason_grade_train_ext.10pct.tfrecord'
-TEST_RECORD_PATH =  '../data/gleason_grade_val_ext.tfrecord'
+train_record_path = '../data/gleason_grade_train_ext.tfrecord'
+test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 
-def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path,
-         train_record_path=TRAIN_RECORD_PATH, test_record_path=TEST_RECORD_PATH):
+def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
     n_classes = 5
+    # batch_size = 32
+    # crop_size = 512
+    # image_ratio = 0.25
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
               3]
 
-    iterations = 1000
-    epochs = n_epochs
-    snapshot_epochs = 10
-    test_epochs = 10
+    iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
+    epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
+    snapshot_epochs = 25
+    test_epochs = 25
     step_start = 0
 
-    prefetch = 2048
-    threads = 8
+    prefetch = 3096
+    threads = 12
 
+    # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
         basedir=basedir, remove_old=False)
     snapshot_path = None
 
     gamma = 1e-5
+    # lr_0 = 1e-5
     def learning_rate(lr_0, gamma, step):
         return lr_0 * np.exp(-gamma*step)
 
@@ -52,11 +56,12 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ratio = image_ratio,
             batch_size = batch_size,
             prefetch = prefetch,
-            shuffle_buffer = 256,
+            shuffle_buffer = 128,
             n_classes = n_classes,
             as_onehot = True,
             mask_dtype = tf.uint8,
             img_channels = 3,
+            # preprocess = [],
             n_threads = threads)
         dataset.print_info()
 
@@ -69,7 +74,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             summary_iters = 100,
             summary_image_iters = iterations,
             summary_image_n = 4,
-            max_to_keep = 50,
+            max_to_keep = 20,
             # summarize_grads = True,
             # summarize_vars = True,
             x_dims = x_dims)
@@ -90,7 +95,9 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
                 for itx in xrange(iterations):
                     training_step += 1
+                    # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
+                    # model.train_step(lr=1e-4)
 
                 print('Epoch [{}] step [{}] time elapsed [{}]s'.format(
                     epx, model.global_step, time.time()-epoch_start))
@@ -120,8 +127,6 @@ if __name__ == '__main__':
     parser.add_argument( '--lr', default=1e-4 , type=float)
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)
-    parser.add_argument( '--train_path', default=None , type=str)
-    parser.add_argument( '--test_path', default=None , type=str)
 
     args = parser.parse_args()
     batch_size = args.batch_size
@@ -132,15 +137,4 @@ if __name__ == '__main__':
     basedir = args.basedir
     restore_path = args.restore_path
 
-    if args.train_path and args.test_path:
-        main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path,
-             train_record_path=args.train_path,
-             test_record_path=args.test_path)
-    elif args.train_path and not args.test_path:
-        main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path,
-             train_record_path=args.train_path)
-    elif args.test_path and not args.train_path:
-        main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path,
-             test_record_path=args.test_path)
-    else:
-        main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path)
+    main(batch_size, image_ratio, crop_size, n_epochs, lr, basedir, restore_path)

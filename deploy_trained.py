@@ -41,11 +41,13 @@ def prob_output(svs):
     probs *= 255.
     probs = probs.astype(np.uint8)
     return probs
+    # return probs[:,:,:3]
 
 def rgb_output(svs):
     rgb = svs.output_imgs['rgb']
     rgb += 1.0
     rgb *= (255. / 2.)
+    # print 'fixed: ', rgb.shape, rgb.dtype, rgb.min(), rgb.max()
     return rgb[:,:,::-1]
 
 def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
@@ -55,19 +57,47 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
     return dst
 
 
-def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversample,
-         batch_size):
-    print('Working {}'.format(ramdisk_path))
-    svs = Slide(slide_path    = ramdisk_path,
+def process_slide(slide_path, model, sess, out_dir, process_mag, 
+                  process_size, oversample, batch_size, n_classes):
+    """ Process a slide
+
+    Args:
+    slide_path: str
+        absolute or relative path to svs formatted slide
+    model: tfmodels.SegmentationBasemodel object
+        model definition to use. Weights must be restored first, 
+        i.e. call model.restore() before passing model
+    sess: tf.Session
+    out_dir: str
+        path to use for output
+    process_mag: int
+        Usually one of: 5, 10, 20, 40.
+        Other values may work but have not been tested
+    process_size: int
+        The input size required by model. 
+    oversample: float. Usually in [1., 2.]
+        How much to oversample between tiles. Larger values 
+        will increase processing time.
+    batch_size: int
+        The batch size for inference. If the batch size is too 
+        large given the model and process_size, then OOM errors
+        will be raised
+    n_classes: int
+        The number of classes output by model. 
+        i.e. shape(model.yhat) = (batch, h, w, n_classes)
+    """
+    
+    print('Working {}'.format(slide_path))
+    svs = Slide(slide_path    = slide_path,
                 preprocess_fn = preprocess_fn,
                 process_mag   = process_mag,
                 process_size  = process_size,
-                oversample_factor = oversample,
+                oversample    = oversample,
                 verbose = False,
                 )
-    svs.initialize_output('prob', dim=5)
+    svs.initialize_output('prob', dim=n_classes)
     svs.initialize_output('rgb', dim=3)
-    PREFETCH = min(len(svs.place_list), 2048)
+    PREFETCH = min(len(svs.place_list), 1024)
 
     def wrapped_fn(idx):
         try:
@@ -85,9 +115,9 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=8)
-    ds = ds.batch(batch_size)
+    ds = ds.map(read_region_at_index, num_parallel_calls=12)
     ds = ds.prefetch(PREFETCH)
+    ds = ds.batch(batch_size)
 
     iterator = ds.make_one_shot_iterator()
     img, idx = iterator.get_next()
@@ -102,7 +132,7 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
             svs.place_batch(output, idx_, 'prob')
             svs.place_batch(tile, idx_, 'rgb')
 
-            n_processed += batch_size
+            n_processed += BATCH_SIZE
             if n_processed % PRINT_ITER == 0:
                 print('[{:06d}] elapsed time [{:3.3f}]'.format(
                     n_processed, time.time() - tstart ))
@@ -122,6 +152,8 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
 
         except Exception as e:
             print('Caught exception at tiles {}'.format(idx_))
+            # print(e.__doc__)
+            # print(e.message)
             prob_img = None
             rgb_img = None
             break
@@ -131,10 +163,10 @@ def main(ramdisk_path, model, sess, out_dir, process_mag, process_size, oversamp
     return prob_img, rgb_img, fps
 
 
-""" Return an inference class to use
+def _get_model(model_type, sess, process_size):
+    """ Return a model instance to use 
 
-"""
-def get_model(model_type, sess, process_size):
+    """
     x_dims = [process_size, process_size, 3]
     if model_type == 'densenet':
         model = densenet(sess=sess, x_dims=x_dims)
@@ -152,24 +184,7 @@ def get_model(model_type, sess, process_size):
     return model
 
 
-
-if __name__ == '__main__':
-    PROCESS_MAG = 10
-    PROCESS_SIZE = 256
-    OVERSAMPLE = 1.25
-    BATCH_SIZE = 16
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--slide_dir')
-    parser.add_argument('--model', default='fcn8s')
-    parser.add_argument('--out', default='fcn8s/10x/inference')
-    parser.add_argument('--snapshot', default='fcn8s/10x/snapshots/fcn.ckpt-41085')
-    parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
-    parser.add_argument('--mag', default=PROCESS_MAG, type=int)
-    parser.add_argument('--size', default=PROCESS_SIZE, type=int)
-    parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
-
-    args = parser.parse_args()
+def main(args):
     out_dir = args.out
 
     slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
@@ -190,7 +205,7 @@ if __name__ == '__main__':
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
-        model = get_model(args.model, sess, args.size)
+        model = _get_model(args.model, sess, args.size)
         try:
             model.restore(args.snapshot)
         except:
@@ -205,8 +220,8 @@ if __name__ == '__main__':
             ramdisk_path = transfer_to_ramdisk(slide_path)
             try:
                 time_start = time.time()
-                prob_img, rgb_img, fps =  main(ramdisk_path, model, sess, out_dir,
-                    args.mag, args.size, args.oversample, args.batch_size)
+                prob_img, rgb_img, fps =  process_slide(ramdisk_path, model, sess, out_dir,
+                    args.mag, args.size, args.oversample, args.batch_size, args.n_classes)
                 if prob_img is None:
                     raise Exception('Failed.')
 
@@ -256,3 +271,25 @@ if __name__ == '__main__':
         f.write('Mean: {:3.4f} +/- {:3.5f}\n'.format(fps_mean, fps_std))
 
     print('Done!')
+
+if __name__ == '__main__':
+    # Defaults
+    PROCESS_MAG = 10
+    PROCESS_SIZE = 256
+    OVERSAMPLE = 1.1
+    BATCH_SIZE = 4
+    N_CLASSES = 5
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--slide_dir')
+    parser.add_argument('--model', default='densenet')
+    parser.add_argument('--out', default='densenet/10x/inference')
+    parser.add_argument('--snapshot', default='densenet/10x/snapshots/densenet.ckpt-41085')
+    parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
+    parser.add_argument('--mag', default=PROCESS_MAG, type=int)
+    parser.add_argument('--size', default=PROCESS_SIZE, type=int)
+    parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
+    parser.add_argument('--n_classes', default=N_CLASSES, type=int)
+
+    args = parser.parse_args()
+    main(args)

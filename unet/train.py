@@ -34,6 +34,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     prefetch = 756
     threads = 8
 
+    # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
         basedir=basedir, remove_old=False)
 
@@ -90,7 +91,9 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
                 for itx in xrange(iterations):
                     training_step += 1
+                    # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
+                    # model.train_step(lr=1e-4)
 
                 print('Epoch [{}] step [{}] time elapsed [{}]s'.format(
                     epx, model.global_step, time.time()-epoch_start))
@@ -112,6 +115,12 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
 
 
 if __name__ == '__main__':
+    # batch_size = int(sys.argv[1])
+    # image_ratio = float(sys.argv[2])
+    # crop_size = int(sys.argv[3])
+    # n_epochs = int(sys.argv[4])
+    # lr_0 = float(sys.argv[5])
+    # basedir = sys.argv[6]
 
     parser = argparse.ArgumentParser()
     parser.add_argument( '--batch_size' , default=12 , type=int)
@@ -122,6 +131,7 @@ if __name__ == '__main__':
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)
 
+    # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()
     batch_size = args.batch_size
     image_ratio = args.image_ratio
