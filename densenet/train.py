@@ -21,10 +21,7 @@ test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 N_CLASSES = 5
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
-    n_classes = 5
-    # batch_size = 32
-    # crop_size = 512
-    # image_ratio = 0.25
+    n_classes = N_CLASSES
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
               3]
@@ -35,7 +32,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     test_epochs = 25
     step_start = 0
 
-    prefetch = 2048
+    prefetch = 512
     threads = 8
 
     # basedir = '5x'

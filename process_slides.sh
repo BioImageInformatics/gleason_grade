@@ -2,32 +2,20 @@
 
 set -e
 
-svsdir=data/validation_svs
+# svsdir=data/validation_svs
+svsdir=/mnt/slowdata/slide_data/durham/max_high_grade_content/
 
 outdir=(
-<<<<<<< HEAD
-densenet/ext_5x/inference
+densenet/ext_10x/durham_val
 )
 
 snapshot=(
-densenet/ext_5x/snapshots/densenet.ckpt-355669
-)
-
-mags=( 5 )
-sizes=( 256 )
-batches=( 8 )
-=======
-densenet_small/extended_10x/inference
-)
-
-snapshot=(
-densenet_small/extended_10x/snapshots/densenet.ckpt-18675
+densenet/ext_10x/snapshots/densenet.ckpt-1996000
 )
 
 mags=( 10 )
 sizes=( 256 )
-batches=( 25 )
->>>>>>> 2ec4c25d8aee77be3d0b89b54c6e8691dc346b36
+batches=( 6 )
 
 for i in `seq 0 ${#outdir[@]}`; do
   python ./deploy_trained.py \
