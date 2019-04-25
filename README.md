@@ -9,6 +9,10 @@ If you find this code useful please cite:
 bibtex
 ```
 
+Original | Classified
+:-------:|:---------:
+<img src="./assets/1305474_rgb.jpg" width="512"> | <img src="./assets/1305474_classified.jpg" width="512">
+
 ### Installation
 
 Scripts may be run from the root directory of this project, or from any of the sub-directories.
@@ -23,6 +27,15 @@ git clone https://github.com/BioImageInformatics/tfmodels
 ```
 
 Tested on Ubuntu. Python 2.7 and 3.6
+
+
+### Tutorials
+
+1. Creating data from image / mask pairs
+2. Training a segmentation network using `tfmodels`
+3. Validating performance on image / mask pairs
+4. Applying the model to a whole slide `svs` image
+
 
 
 ### Directory structure

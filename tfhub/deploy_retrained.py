@@ -71,10 +71,9 @@ def main(sess, ramdisk_path, image_op, predict_op):
                 process_mag   = PROCESS_MAG,
                 process_size  = x_size,
                 oversample    = OVERSAMPLE,
-                verbose = True
+                verbose = False
                 )
-    svs.initialize_output('prob', dim=5, mode='tile')
-    svs.print_info()
+    svs.initialize_output('prob', dim=4, mode='tile')
     PREFETCH = min(len(svs.tile_list), 1024)
 
     def wrapped_fn(idx):
@@ -113,6 +112,12 @@ def main(sess, ramdisk_path, image_op, predict_op):
 
         except tf.errors.OutOfRangeError:
             print('Finished')
+            break
+
+        except Exception as e:
+            print(e.__doc__)
+            print(e)
+            print('Error')
             break
 
     dt = time.time()-tstart
