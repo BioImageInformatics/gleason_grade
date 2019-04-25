@@ -9,12 +9,21 @@ import numpy as np
 #                    [220,220,50],
 #                    [255,255,255]])
 
-colors = np.array([[175, 33, 8],
-                   [20, 145, 4],
-                #    [177, 11, 237],
-                   [14, 187, 235],
-                #    [3, 102, 163],
-                   [255,255,255]
+# colors = np.array([[175, 33, 8],
+#                    [20, 145, 4],
+#                 #    [177, 11, 237],
+#                    [14, 187, 235],
+#                 #    [3, 102, 163],
+#                    [255,255,255]
+#                   ])
+
+colors = np.array([[239, 188, 57], # Orange
+                   [198, 27, 27],  # Red
+                #    [198, 27, 27],  # Red
+                   [11, 147, 8], # Green
+                #    [80, 81, 80],# Gray
+                   [255, 255, 255],
+                   [255, 255, 255],
                   ])
 
 def color_mask(mask):
@@ -39,7 +48,7 @@ def colorize(img, mask):
 
     mask = color_mask(mask)
 
-    img = np.add(img*0.6, mask*0.4)
+    img = np.add(img*0.4, mask*0.6)
     img = cv2.convertScaleAbs(img)
     return img
 
@@ -49,7 +58,7 @@ def main(imgsrc, msksrc, dst):
     msklist = sorted(glob.glob(os.path.join(msksrc, '*.png')))
 
     for img, msk in zip(imglist, msklist):
-        print img, msk
+        print(img, msk)
         color = colorize(img, msk)
         img_base = os.path.basename(img)
         dstfile = os.path.join(dst, img_base)
