@@ -10,3 +10,6 @@
 */events.*
 */inference/*
 
+*.jpg
+*.png
+*.tfrecord

@@ -12,23 +12,22 @@ import tensorflow as tf
 
 # sys.path.insert(0, 'svs_reader')
 from svs_reader import Slide
-# sys.path.insert(0, 'tfmodels')
-import tfmodels
 
 sys.path.insert(0, '.')
+import tfmodels
 
 from densenet import Inference as densenet
-from densenet_small import Inference as densenet_s
-from fcn8s import Inference as fcn8s
-from fcn8s_small import Inference as fcn8s_s
-from unet import Inference as unet
-from unet_small import Inference as unet_s
+# from densenet_small import Inference as densenet_s
+# from fcn8s import Inference as fcn8s
+# from fcn8s_small import Inference as fcn8s_s
+# from unet import Inference as unet
+# from unet_small import Inference as unet_s
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
 PRINT_ITER = 500
-RAM_DISK = '/dev/shm'
+RAM_DISK = '/app'
 
 def preprocess_fn(img):
   img = img * (2/255.) -1
@@ -55,13 +54,15 @@ def transfer_to_ramdisk(src, ramdisk = RAM_DISK):
   shutil.copyfile(src, dst)
   return dst
 
-def process_slide(slide_path, model, sess, out_dir, process_mag, 
+def process_slide(slide_path, fg_path, model, sess, out_dir, process_mag, 
           process_size, oversample, batch_size, n_classes):
   """ Process a slide
 
   Args:
   slide_path: str
     absolute or relative path to svs formatted slide
+  fb_path: str
+    absolute or relative path to foreground png
   model: tfmodels.SegmentationBasemodel object
     model definition to use. Weights must be restored first, 
     i.e. call model.restore() before passing model
@@ -86,7 +87,13 @@ def process_slide(slide_path, model, sess, out_dir, process_mag,
   """
   
   print('Working {}'.format(slide_path))
+  print('Working {}'.format(fg_path))
+  fgimg = cv2.imread(fg_path, 0)
+  fgimg = cv2.morphologyEx(fgimg, cv2.MORPH_CLOSE, 
+                           cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)))
   svs = Slide(slide_path  = slide_path,
+        background_speed = 'image', 
+        background_image = fgimg,
         preprocess_fn = preprocess_fn,
         process_mag   = process_mag,
         process_size  = process_size,
@@ -168,40 +175,68 @@ def _get_model(model_type, sess, process_size):
   x_dims = [process_size, process_size, 3]
   if model_type == 'densenet':
     model = densenet(sess=sess, x_dims=x_dims)
-  if model_type == 'densenet_s':
-    model = densenet_s(sess=sess, x_dims=x_dims)
-  if model_type == 'fcn8s':
-    model = fcn8s(sess=sess, x_dims=x_dims)
-  if model_type == 'fcn8s_s':
-    model = fcn8s_s(sess=sess, x_dims=x_dims)
-  if model_type == 'unet':
-    model = unet(sess=sess, x_dims=x_dims)
-  if model_type == 'unet_s':
-    model = unet_s(sess=sess, x_dims=x_dims)
+  # if model_type == 'densenet_s':
+  #   model = densenet_s(sess=sess, x_dims=x_dims)
+  # if model_type == 'fcn8s':
+  #   model = fcn8s(sess=sess, x_dims=x_dims)
+  # if model_type == 'fcn8s_s':
+  #   model = fcn8s_s(sess=sess, x_dims=x_dims)
+  # if model_type == 'unet':
+  #   model = unet(sess=sess, x_dims=x_dims)
+  # if model_type == 'unet_s':
+  #   model = unet_s(sess=sess, x_dims=x_dims)
 
   return model
 
+def get_slide_from_list(slide_file):
+  print(slide_file)
+  slide_list = []
+  with open(str(slide_file), 'r') as f:
+    for L in f:
+      L_ = L.replace('\n', '')
+      slide_list.append(L_)
+  return slide_list
+
+def get_matching_fg(slide_list, fg_list):
+  slide_base = np.array([os.path.basename(s).replace('.svs', '') for s in slide_list])
+  fg_base = np.array([os.path.basename(s).replace('_fg.png', '') for s in fg_list])
+  print(slide_base)
+  print(fg_base)
+  slide_, fg_ = [], []
+  for i, s in enumerate(slide_base):
+    if s in fg_base:
+      idx = np.argwhere(fg_base == s)[0][0]
+      print(s, idx)    
+      slide_.append(slide_list[i])
+      fg_.append(fg_list[idx])
+
+  for s, f in zip(slide_, fg_):
+    print(s, f)
+
+  return slide_, fg_
 
 def main(args):
-  assert args.out is not None
-  assert args.slide_dir is not None
   out_dir = args.out
 
-  slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
-  print('Working on {} slides from {}'.format(len(slide_list), args.slide_dir))
+  assert os.path.exists(args.slide_list), "{} does not exist".format(slide_list)
+  # slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
+  slide_list = get_slide_from_list(args.slide_list)
+  fg_list = get_slide_from_list(args.fg_list)
+  slide_list, fg_list = get_matching_fg(slide_list, fg_list)
+  print('Working on {} slides from {}'.format(len(slide_list), args.slide_list))
 
   if not os.path.exists(out_dir):
     print('Creating {}'.format(out_dir))
     os.makedirs(out_dir)
 
-  processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
-  print('Found {} processed slides.'.format(len(processed_list)))
-  processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
+  # processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
+  # print('Found {} processed slides.'.format(len(processed_list)))
+  # processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
 
-  slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
-  slide_base_list = zip(slide_base, slide_list)
-  slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
-  print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
+  # slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
+  # slide_base_list = zip(slide_base, slide_list)
+  # slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
+  # print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
   print('out_dir: ', out_dir)
   with tf.Session(config=config) as sess:
@@ -215,12 +250,17 @@ def main(args):
 
     times = {}
     fpss = {}
-    for slide_num, slide_path in enumerate(slide_list):
+    for slide_num, (slide_path, fg_path) in enumerate(zip(slide_list, fg_list)):
       print('\n\n[\tSlide {}/{}\t]\n'.format(slide_num, len(slide_list)))
+      slide_path_base = os.path.basename(slide_path)
+
+      assert os.path.exists(fg_path), 'fg file not found'.format(fg_path)
       ramdisk_path = transfer_to_ramdisk(slide_path)
+      print(ramdisk_path)
+      print(os.listdir('/app'))
       try:
         time_start = time.time()
-        prob_img, rgb_img, fps =  process_slide(ramdisk_path, model, sess, out_dir,
+        prob_img, rgb_img, fps =  process_slide(ramdisk_path, fg_path, model, sess, out_dir,
           args.mag, args.size, args.oversample, args.batch_size, args.n_classes)
         if prob_img is None:
           raise Exception('Failed.')
@@ -244,7 +284,7 @@ def main(args):
         print(e.message)
       finally:
         os.remove(ramdisk_path)
-        print('Removed {}'.format(ramdisk_path))
+        print('Finished with {}'.format(ramdisk_path))
 
   time_record = os.path.join(out_dir, 'processing_time.txt')
   fps_record = os.path.join(out_dir, 'processing_fps.txt')
@@ -273,24 +313,27 @@ def main(args):
   print('Done!')
 
 if __name__ == '__main__':
+  print(os.listdir('.'))
+  print(__file__)
+
   # Defaults
   PROCESS_MAG = 10
   PROCESS_SIZE = 256
-  OVERSAMPLE = 1.2
-  BATCH_SIZE = 8
+  OVERSAMPLE = 1.25
+  BATCH_SIZE = 4
   N_CLASSES = 5
 
   parser = argparse.ArgumentParser()
+  parser.add_argument('--slide_list', default='slide.txt', type=str)
+  parser.add_argument('--fg_list', default='foreground.txt', type=str)
   parser.add_argument('--model', default='densenet')
+  parser.add_argument('--out', default='densenet/10x/inference')
   parser.add_argument('--snapshot', default='./densenet.ckpt-61690')
-  parser.add_argument('--slide_dir', default=None)
-  parser.add_argument('--out', default=None)
-
+  parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
   parser.add_argument('--mag', default=PROCESS_MAG, type=int)
   parser.add_argument('--size', default=PROCESS_SIZE, type=int)
-  parser.add_argument('--n_classes', default=N_CLASSES, type=int)
-  parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
   parser.add_argument('--oversample', default=OVERSAMPLE, type=float)
+  parser.add_argument('--n_classes', default=N_CLASSES, type=int)
 
   args = parser.parse_args()
   main(args)
