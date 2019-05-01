@@ -84,7 +84,7 @@ class DenseNet(Segmentation):
         concat_list = [x_flow]
         # print('\t x_flow', x_flow.get_shape())
         with tf.variable_scope('{}_{}'.format(name_scope, block_num)):
-            for l_i in xrange(n_layers):
+            for l_i in range(n_layers):
                 layer_name = 'd{}_l{}'.format(block_num, l_i)
                 x_b = nonlin(conv(x_flow, var_scope=layer_name+'b', **conv_settings_b))
                 x_hidden = nonlin(conv(x_b, var_scope=layer_name, **conv_settings))

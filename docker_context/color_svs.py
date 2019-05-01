@@ -5,12 +5,11 @@ import glob
 import argparse
 import numpy as np
 
-colors = np.array([[175, 33, 8],
-                   [20, 145, 4],
-                   [177, 11, 237],
-                   [14, 187, 235],
-                   [3, 102, 163],
-                   [0,0,0]
+colors = np.array([[234, 228, 44], # Yellow
+                   [206, 29, 2], # Red
+                   [161, 166, 168], # Gray
+                   [253, 179, 240], # Pink
+                   [255, 255, 255], # White - background
                   ])
 
 def main(args):
@@ -27,9 +26,9 @@ def main(args):
       mask = np.zeros(list(x.shape[:2])+[3], dtype=np.uint8) 
       xsum = np.sum(x, axis=-1)
       amax = np.argmax(x, axis=-1)
-      amax[xsum < 1.-1e-3] = 5
+      amax[xsum < 1.-1e-3] = 4 # Background color
 
-      for k in range(5):
+      for k in range(colors.shape[0]):
           mask[amax==k] = colors[k,:]
 
       print(n, inf_out)

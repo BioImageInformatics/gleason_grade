@@ -16,9 +16,9 @@ from densenet import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train_ext.75pct.tfrecord'
+train_record_path = '../data/gleason_grade_train_ext.tfrecord'
 test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
-N_CLASSES = 5
+N_CLASSES = 4
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
     n_classes = N_CLASSES
@@ -28,11 +28,11 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
 
     iterations = 4000  ## Define epoch length
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
-    snapshot_epochs = 20
+    snapshot_epochs = 10
     test_epochs = 25
     step_start = 0
 
-    prefetch = 512
+    prefetch = 256
     threads = 8
 
     # basedir = '5x'
@@ -53,7 +53,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ratio = image_ratio,
             batch_size = batch_size,
             prefetch = prefetch,
-            shuffle_buffer = 512,
+            shuffle_buffer = 256,
             n_classes = N_CLASSES,
             as_onehot = True,
             mask_dtype = tf.uint8,
@@ -88,10 +88,10 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ## Re-initialize training step to have a clean learning rate curve
             training_step = 0
             print('Starting with model at step {}'.format(model.global_step))
-            for epx in xrange(1, epochs):
+            for epx in range(1, epochs):
                 epoch_start = time.time()
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
-                for itx in xrange(iterations):
+                for itx in range(iterations):
                     training_step += 1
                     # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)

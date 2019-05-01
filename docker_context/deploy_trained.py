@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 
 # sys.path.insert(0, 'svs_reader')
-from svs_reader import Slide
+from svs_reader import Slide, reinhard
 
 sys.path.insert(0, '.')
 import tfmodels
@@ -30,6 +30,7 @@ PRINT_ITER = 500
 RAM_DISK = '/app'
 
 def preprocess_fn(img):
+  img = reinhard(img)
   img = img * (2/255.) -1
   return img.astype(np.float32)
 
@@ -168,13 +169,14 @@ def process_slide(slide_path, fg_path, model, sess, out_dir, process_mag,
   return prob_img, rgb_img, fps
 
 
-def _get_model(model_type, sess, process_size):
+def _get_model(model_type, sess, process_size, n_classes):
   """ Return a model instance to use 
 
   """
   x_dims = [process_size, process_size, 3]
   if model_type == 'densenet':
-    model = densenet(sess=sess, x_dims=x_dims)
+    model = densenet(sess=sess, x_dims=x_dims,
+                     n_classes=n_classes)
   # if model_type == 'densenet_s':
   #   model = densenet_s(sess=sess, x_dims=x_dims)
   # if model_type == 'fcn8s':
@@ -225,6 +227,7 @@ def main(args):
   slide_list, fg_list = get_matching_fg(slide_list, fg_list)
   print('Working on {} slides from {}'.format(len(slide_list), args.slide_list))
 
+  print('out_dir: ', out_dir)
   if not os.path.exists(out_dir):
     print('Creating {}'.format(out_dir))
     os.makedirs(out_dir)
@@ -238,9 +241,8 @@ def main(args):
   # slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
   # print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
-  print('out_dir: ', out_dir)
   with tf.Session(config=config) as sess:
-    model = _get_model(args.model, sess, args.size)
+    model = _get_model(args.model, sess, args.size, args.n_classes)
     try:
       model.restore(args.snapshot)
     except:
@@ -321,14 +323,14 @@ if __name__ == '__main__':
   PROCESS_SIZE = 256
   OVERSAMPLE = 1.25
   BATCH_SIZE = 4
-  N_CLASSES = 5
+  N_CLASSES = 4
 
   parser = argparse.ArgumentParser()
   parser.add_argument('--slide_list', default='slide.txt', type=str)
   parser.add_argument('--fg_list', default='foreground.txt', type=str)
   parser.add_argument('--model', default='densenet')
-  parser.add_argument('--out', default='densenet/10x/inference')
-  parser.add_argument('--snapshot', default='./densenet.ckpt-61690')
+  parser.add_argument('--out', default='/data/inference')
+  parser.add_argument('--snapshot', default='./densenet.ckpt-360000')
   parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
   parser.add_argument('--mag', default=PROCESS_MAG, type=int)
   parser.add_argument('--size', default=PROCESS_SIZE, type=int)

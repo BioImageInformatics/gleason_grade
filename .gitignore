@@ -13,3 +13,5 @@
 *.jpg
 *.png
 *.tfrecord
+
+tfmodels/

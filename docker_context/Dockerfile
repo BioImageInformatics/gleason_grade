@@ -1,4 +1,4 @@
-FROM ingn/tensorflow-gpu-openslide:latest
+FROM ingn/tensorflow:gpu-openslide
 
 RUN apt-get install -y vim
 
@@ -15,10 +15,14 @@ ADD tfmodels/* /app/tfmodels/
 #     pip3 install -e .
 
 WORKDIR /
-ADD densenet.ckpt-61690* /app/
+ADD densenet.ckpt-360000* /app/
 ADD deploy_trained.py /app/
 ADD color_svs.py /app/
 ADD densenet/* /app/densenet/
+
+RUN pip3 install scikit-learn &&\
+    pip3 install pandas &&\
+    pip3 install seaborn
 
 WORKDIR /app
 

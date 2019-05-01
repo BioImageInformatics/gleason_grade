@@ -17,12 +17,10 @@ import numpy as np
 #                    [255,255,255]
 #                   ])
 
-colors = np.array([[239, 188, 57], # Orange
-                   [198, 27, 27],  # Red
-                #    [198, 27, 27],  # Red
-                   [11, 147, 8], # Green
-                #    [80, 81, 80],# Gray
-                   [255, 255, 255],
+colors = np.array([[234, 228, 44], # Yellow
+                   [232, 144, 37],  # Orange
+                   [206, 29, 2],  # Red
+                   [161, 166, 168], # Gray
                    [255, 255, 255],
                   ])
 
@@ -42,10 +40,11 @@ def color_mask(mask):
     newmask = np.dstack((b,g,r))
     return newmask
 
-def colorize(img, mask):
-    img = cv2.imread(img)
-    mask = cv2.imread(mask)
+def colorize(img_path, mask_path):
+    img = cv2.imread(img_path)
+    mask = cv2.imread(mask_path)
 
+    print(img_path, mask_path, np.unique(mask))
     mask = color_mask(mask)
 
     img = np.add(img*0.4, mask*0.6)
@@ -56,9 +55,12 @@ def colorize(img, mask):
 def main(imgsrc, msksrc, dst):
     imglist = sorted(glob.glob(os.path.join(imgsrc, '*.jpg')))
     msklist = sorted(glob.glob(os.path.join(msksrc, '*.png')))
+    print('imglist: {}'.format(len(imglist)))
+    print('msklist: {}'.format(len(msklist)))
 
     for img, msk in zip(imglist, msklist):
-        print(img, msk)
+        assert os.path.exists(img)
+        assert os.path.exists(msk)
         color = colorize(img, msk)
         img_base = os.path.basename(img)
         dstfile = os.path.join(dst, img_base)
@@ -67,8 +69,8 @@ def main(imgsrc, msksrc, dst):
 
 if __name__ == '__main__':
 
-    imgsrc = 'jpg_ext'
-    msksrc = 'mask_ext'
-    dst = 'colored_ext'
+    imgsrc = 'val_jpg_ext'
+    msksrc = 'val_mask_ext'
+    dst = 'colored_val_ext'
 
     main(imgsrc, msksrc, dst)
