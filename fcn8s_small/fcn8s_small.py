@@ -28,8 +28,9 @@ class FCN(Segmentation):
     fcn_defaults={
         'k_size': [3, 3, 3, 3],
         # 'conv_kernels': [64, 128, 256, 256, 512], ## Original dimensions
-        'conv_kernels': [32, 32, 64, 128, 256], ## Reduced dimensions by half
-        'fc_dim': 1024,
+        'conv_kernels': [48, 96, 192, 192, 384], ## Reduced dimensions by 0.75
+        # 'conv_kernels': [32, 32, 64, 128, 256], ## Reduced dimensions by half
+        'fc_dim': 1536,
         'use_optimizer': 'Adam',
         'name': 'fcn',
         'n_classes': 5,

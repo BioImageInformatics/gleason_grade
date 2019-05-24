@@ -1,45 +1,43 @@
 #!/bin/bash
 
-#set -e
+# set -e
 
-jpg=../data/val_jpg
-mask=../data/val_mask
+jpg=../data/val_jpg_ext
+mask=../data/val_mask_ext
 # jpg=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_jpg
 # mask=/media/ing/D/image_data/segmentation/gleason_grade/cbm_split/val_mask
 
-snapshot_dirs=( 5x/snapshots 10x/snapshots 20x/snapshots )
-mags=( 5 10 20 )
-output=test_log_MAG.tsv
+# snapshot_dirs=( 5x_FOV/snapshots 10x_FOV/snapshots 20x_FOV/snapshots )
+# mags=( 5 10 20 )
+snapshot_dirs=( extended_10x/snapshots )
+mags=( 10 )
+output=test_log_exended.tsv
 
 modeldirs=(
-fcn8s
-fcn8s_small
-unet
-unet_small
+densenet_small
 )
 
 for dd in ${modeldirs[@]}; do
 
   cd /media/nathan/d5fd9c1c-4512-4133-a14c-0eada5531282/project_data/gleason_grade/$dd
+  # cd /home/ing/projects/gleason_grade/$dd
+  pwd
   for i in `seq 0 3`; do
     snapshots=$( ls ${snapshot_dirs[$i]}/*index )
     mag=${mags[$i]}
     for snap in ${snapshots[@]}; do
 
-      echo $snap
-      snap=${snap/.index/}
+      snapshot=${snap/.index/} # replaces .index with a blank string
 
-      echo $jpg $mask $snap $mag $output
       python test.py \
       --jpg_dir $jpg \
       --mask_dir $mask \
-      --snapshot $snap \
+      --snapshot $snapshot \
       --mag $mag \
       --outfile $output \
       --experiment MAG
 
     done
   done
-  pwd
 
 done

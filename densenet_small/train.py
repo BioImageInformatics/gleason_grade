@@ -16,8 +16,8 @@ from densenet_small import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train.tfrecord'
-test_record_path =  '../data/gleason_grade_val.tfrecord'
+train_record_path = '../data/gleason_grade_train_ext.tfrecord'
+test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
     n_classes = 5
@@ -34,8 +34,8 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     test_epochs = 25
     step_start = 0
 
-    prefetch = 2048
-    threads = 8
+    prefetch = 3096
+    threads = 12
 
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(

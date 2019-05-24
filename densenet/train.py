@@ -16,25 +16,23 @@ from densenet import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train.tfrecord'
-test_record_path =  '../data/gleason_grade_val.tfrecord'
+train_record_path = '../data/gleason_grade_train_ext.tfrecord'
+test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
+N_CLASSES = 4
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
-    n_classes = 5
-    # batch_size = 32
-    # crop_size = 512
-    # image_ratio = 0.25
+    n_classes = N_CLASSES
     x_dims = [int(crop_size*image_ratio),
               int(crop_size*image_ratio),
               3]
 
-    iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
+    iterations = 4000  ## Define epoch length
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
     snapshot_epochs = 10
-    test_epochs = 10
+    test_epochs = 25
     step_start = 0
 
-    prefetch = 756
+    prefetch = 256
     threads = 8
 
     # basedir = '5x'
@@ -49,14 +47,14 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
     with tf.Session(config=config) as sess:
         dataset = tfmodels.TFRecordImageMask(
             training_record = train_record_path,
-            testing_record = test_record_path,
+            # testing_record = test_record_path,
             sess = sess,
             crop_size = crop_size,
             ratio = image_ratio,
             batch_size = batch_size,
             prefetch = prefetch,
-            shuffle_buffer = 128,
-            n_classes = n_classes,
+            shuffle_buffer = 256,
+            n_classes = N_CLASSES,
             as_onehot = True,
             mask_dtype = tf.uint8,
             img_channels = 3,
@@ -70,10 +68,11 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             learning_rate = lr_0,
             log_dir = log_dir,
             save_dir = save_dir,
-            summary_iters = 100,
+            summary_iters = 200,
             summary_image_iters = iterations,
             summary_image_n = 4,
-            max_to_keep = 20,
+            max_to_keep = 25,
+            n_classes = N_CLASSES,
             # summarize_grads = True,
             # summarize_vars = True,
             x_dims = x_dims)
@@ -89,10 +88,10 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ## Re-initialize training step to have a clean learning rate curve
             training_step = 0
             print('Starting with model at step {}'.format(model.global_step))
-            for epx in xrange(1, epochs):
+            for epx in range(1, epochs):
                 epoch_start = time.time()
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
-                for itx in xrange(iterations):
+                for itx in range(iterations):
                     training_step += 1
                     # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
@@ -101,8 +100,8 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
                 print('Epoch [{}] step [{}] time elapsed [{}]s'.format(
                     epx, model.global_step, time.time()-epoch_start))
 
-                if epx % test_epochs == 0:
-                    model.test(keep_prob=1.0)
+                # if epx % test_epochs == 0:
+                #     model.test(keep_prob=1.0)
 
                 if epx % snapshot_epochs == 0:
                     model.snapshot()

@@ -121,6 +121,18 @@ class UNet(Segmentation):
             y_hat = conv(up1_2, n_kernel=self.n_classes, var_scope='y_hat', **conv_opts)
             print('y_hat', y_hat.get_shape())
 
+            self.intermediate_ops = {
+                '01. Down1': down1_1,
+                '02. Down2': down2_1,
+                '03. Down3': down3_1,
+                '04. Down4': down4_1,
+                '05. Up4': up4_2,
+                '06. Up3': up3_2,
+                '07. Up2': up2_2,
+                '08. Up1': up1_2,
+                '09. y_hat': y_hat,
+            }
+
         return y_hat
 
     ## Overload to fill in the default keep_prob

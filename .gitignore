@@ -2,6 +2,16 @@
 *.ckpt*
 *.npy
 *.pyc
+*.tar.gz
+
+
 */logs/*
 */snapshots/*
 */events.*
+*/inference/*
+
+*.jpg
+*.png
+*.tfrecord
+
+tfmodels/

@@ -32,7 +32,8 @@ class UNet(Segmentation):
             ## Ad-hoc
             # 'class_weights': [0.9, 0.9, 0.9, 0.3, 0.3],
             'k_size': 3,
-            'conv_kernels': [32, 32, 128, 256, 512],
+            # 'conv_kernels': [32, 32, 128, 256, 512],
+            'conv_kernels': [48, 96, 192, 384, 768], # Reduce by 0.75
             'n_classes': 5,
             'x_dim': [256, 256, 3], ## default
             'name': 'unet', }
@@ -44,7 +45,7 @@ class UNet(Segmentation):
         super(UNet, self).__init__(**unet_defaults)
 
     def model(self, x_in, keep_prob=0.5, reuse=False, training=True):
-        print('DenseNet Model')
+        print('UNet - Small Model')
         nonlin = self.nonlin
         print('Non-linearity:', nonlin)
 

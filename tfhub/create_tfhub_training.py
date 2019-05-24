@@ -24,12 +24,23 @@ def split_subimgs(img):
 
     return subimgs
 
+def initialize_output_dirs(output_base):
+    os.makedirs(output_base)
+
+    for k in range(5):
+        pth = os.path.join(output_base, '{}'.format(k))
+        os.makedirs(pth)
+
 
 CLASSES = range(5)
 def main(source_jpg_dir, source_mask_dir, output_base):
     source_jpg_list = sorted(glob.glob(os.path.join(source_jpg_dir, '*jpg')))
     source_mask_list = sorted(glob.glob(os.path.join(source_mask_dir, '*png')))
     class_counts = np.zeros(5)
+
+    if not os.path.exists(output_base):
+        initialize_output_dirs(output_base)
+
     ix = 0
     for img, mask in zip(source_jpg_list, source_mask_list):
         ix += 1
@@ -55,7 +66,7 @@ def main(source_jpg_dir, source_mask_dir, output_base):
                 class_counts[4] += 1
                 continue
 
-            if non_stroma_cnt > 0.75 * counts.sum():
+            if non_stroma_cnt > 0.5 * counts.sum():
                 outpath = os.path.join(output_base,
                     '{}'.format(non_stroma_max),
                     '{}.jpg'.format(class_counts[non_stroma_max]))
