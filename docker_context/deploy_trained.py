@@ -13,7 +13,6 @@ import tensorflow as tf
 # sys.path.insert(0, 'svs_reader')
 from svs_reader import Slide, reinhard
 
-sys.path.insert(0, '.')
 import tfmodels
 
 from densenet import Inference as densenet
@@ -30,7 +29,7 @@ PRINT_ITER = 500
 RAM_DISK = '/app'
 
 def preprocess_fn(img):
-  img = reinhard(img)
+  # img = reinhard(img)
   img = img * (2/255.) -1
   return img.astype(np.float32)
 
@@ -319,18 +318,18 @@ if __name__ == '__main__':
   print(__file__)
 
   # Defaults
-  PROCESS_MAG = 10
+  PROCESS_MAG = 5
   PROCESS_SIZE = 256
   OVERSAMPLE = 1.25
-  BATCH_SIZE = 4
+  BATCH_SIZE = 8
   N_CLASSES = 4
 
   parser = argparse.ArgumentParser()
   parser.add_argument('--slide_list', default='slide.txt', type=str)
   parser.add_argument('--fg_list', default='foreground.txt', type=str)
   parser.add_argument('--model', default='densenet')
-  parser.add_argument('--out', default='/data/inference')
-  parser.add_argument('--snapshot', default='./densenet.ckpt-360000')
+  parser.add_argument('--out', default='/inference')
+  parser.add_argument('--snapshot', default='./densenet.ckpt-164816')
   parser.add_argument('--batch_size', default=BATCH_SIZE, type=int)
   parser.add_argument('--mag', default=PROCESS_MAG, type=int)
   parser.add_argument('--size', default=PROCESS_SIZE, type=int)

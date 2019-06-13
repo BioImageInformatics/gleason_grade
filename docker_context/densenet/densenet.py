@@ -2,7 +2,6 @@ from __future__ import print_function
 import tensorflow as tf
 import sys
 
-sys.path.insert(0, '../tfmodels')
 from tfmodels import Segmentation
 from tfmodels.utilities.ops import *
 
