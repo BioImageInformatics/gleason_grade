@@ -35,9 +35,9 @@ config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 
-OUTDIR = 'tsne/inception_v3'
+OUTDIR = 'nasnet-large'
 IMGLIST = 'imglist.txt'
-MODULE_PATH = '../../tfhub/snapshots/inception_v3'
+MODULE_PATH = '../../tfhub/snapshots/nasnet_large'
 image_in, predict_op = get_input_output_ops(sess, MODULE_PATH)
 _, height, width, _ = image_in.get_shape()
 

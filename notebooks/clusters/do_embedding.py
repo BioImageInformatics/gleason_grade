@@ -8,16 +8,18 @@ import cv2
 import os
 
 import MulticoreTSNE as mtsne
+import umap
 
-ZPATH = 'tsne/inception_v3/z.npy'
-EPATH = 'tsne/inception_v3/e.npy'
+ZPATH = 'nasnet-large/z.npy'
+EPATH = 'nasnet-large/tsne.npy'
 
-embedder = mtsne.MulticoreTSNE(n_jobs = 8)
 data = np.load(ZPATH)
-
 print(ZPATH, '-->', data.shape)
 
+embedder = mtsne.MulticoreTSNE(n_jobs = 8,
+    n_iter=2000,
+    perplexity=10)
+# embedder = umap.UMAP()
 emb = embedder.fit_transform(data)
-
 print(emb.shape, '-->', EPATH)
 np.save(EPATH, emb)
