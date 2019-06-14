@@ -19,7 +19,10 @@ def main(args):
       inf_out = inf_path.replace('prob.npy', 'color.jpg')
       if os.path.exists(inf_out):
           print('{} {} Exists'.format(n, inf_out))
-          continue
+          if args.clobber:
+            pass
+          else:
+            continue
           
       x = np.load(inf_path)
 
@@ -36,7 +39,8 @@ def main(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('--srcdir')
+  parser.add_argument('srcdir')
+  parser.add_argument('--clobber', default=False, action='store_true')
 
   args = parser.parse_args()
   main(args)

@@ -7,7 +7,6 @@ import os
 import time
 import argparse
 
-sys.path.insert(0, '../tfmodels')
 import tfmodels
 
 sys.path.insert(0, '.')
@@ -16,8 +15,8 @@ from densenet import Training
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train_ext.tfrecord'
-test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
+train_record_path = '../data/gleason_grade_4class_x0001.tfrecord'
+#test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
 N_CLASSES = 4
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
@@ -26,18 +25,18 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
               int(crop_size*image_ratio),
               3]
 
-    iterations = 4000  ## Define epoch length
+    iterations = 5000  ## Define epoch length
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
-    snapshot_epochs = 10
+    snapshot_epochs = 5
     test_epochs = 25
     step_start = 0
 
-    prefetch = 256
+    prefetch = 512
     threads = 8
 
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
-        basedir=basedir, remove_old=False)
+        basedir=basedir, remove_old=True)
 
     gamma = 1e-5
     # lr_0 = 1e-5
@@ -118,13 +117,14 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument( '--batch_size' , default=12 , type=int)
-    parser.add_argument( '--image_ratio', default=0.25 , type=float)
-    parser.add_argument( '--crop_size', default=512 , type=int)
-    parser.add_argument( '--n_epochs', default=200 , type=int)
-    parser.add_argument( '--lr', default=1e-4 , type=float)
-    parser.add_argument( '--basedir', default='trained' , type=str)
-    parser.add_argument( '--restore_path', default=None , type=str)
+    parser.add_argument( '--batch_size' , default=16 , type=int)
+    parser.add_argument( '--image_ratio', default=1. , type=float)
+    parser.add_argument( '--crop_size', default=256 , type=int)
+    parser.add_argument( '--n_epochs', default=25 , type=int)
+    parser.add_argument( '--lr', default=1e-6 , type=float)
+    parser.add_argument( '--basedir', default='5x_x0002' , type=str)
+    parser.add_argument( '--restore_path', default='5x_LONG_x0001/snapshots/densenet.ckpt-45000', 
+                         type=str)
 
     # restore_path = '10x/snapshots/unet.ckpt-61690'
     args = parser.parse_args()

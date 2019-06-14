@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # https://stackoverflow.com/ \
 # questions/33759623/tensorflow-how-to-save-restore-a-model/47235448#47235448
 
@@ -12,7 +14,7 @@ import time
 import shutil
 import argparse
 
-sys.path.insert(0, '..')
+# sys.path.insert(0, '..')
 from svs_reader import Slide
 
 config = tf.ConfigProto()
@@ -57,8 +59,8 @@ def get_input_output_ops(sess, model_path):
     return image_op, predict_op
 
 PROCESS_MAG = 10
-BATCH_SIZE = 6
-OVERSAMPLE = 1.35
+BATCH_SIZE = 16
+OVERSAMPLE = 1.5
 PRINT_ITER = 500
 def main(sess, ramdisk_path, image_op, predict_op):
     input_size = image_op.get_shape().as_list()
@@ -68,6 +70,7 @@ def main(sess, ramdisk_path, image_op, predict_op):
     print('Working {}'.format(ramdisk_path))
     svs = Slide(slide_path    = ramdisk_path,
                 preprocess_fn = preprocess_fn,
+                normalize_fn  = lambda x: x, 
                 process_mag   = PROCESS_MAG,
                 process_size  = x_size,
                 oversample    = OVERSAMPLE,
@@ -89,7 +92,7 @@ def main(sess, ramdisk_path, image_op, predict_op):
 
     ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
         output_types=tf.int64)
-    ds = ds.map(read_region_at_index, num_parallel_calls=12)
+    ds = ds.map(read_region_at_index, num_parallel_calls=8)
     ds = ds.prefetch(PREFETCH)
     ds = ds.batch(BATCH_SIZE)
 
@@ -131,37 +134,46 @@ def main(sess, ramdisk_path, image_op, predict_op):
 
     return prob_img, fps
 
+
+def read_list(pth):
+  l = []
+  with open(pth, 'r') as f:
+    for L in f:
+      l.append(L.strip())
+  return l
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path')
-    parser.add_argument('--slide_dir')
-    parser.add_argument('--out')
+    parser.add_argument('--model_path', default='snapshots/mobilenet_v2_050_224_75pct')
+    parser.add_argument('--slide_list', default='slidelist.txt')
+    parser.add_argument('--out', default='cedars_inference')
+    parser.add_argument('--clobber', default=False, action='store_true')
 
     args = parser.parse_args()
-    model_path = args.model_path
-    slide_dir = args.slide_dir
     out_dir = args.out
     print(args)
 
-    print(slide_dir)
-    slide_list = glob.glob(os.path.join(slide_dir, '*.svs'))
+    slide_list = read_list(args.slide_list)
     print('Slide list: {}'.format(len(slide_list)))
 
     if not os.path.exists(out_dir):
         print('Making {}'.format(out_dir))
         os.makedirs(out_dir)
 
-    processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
-    print('Found {} processed slides.'.format(len(processed_list)))
-    processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
-    slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
-    slide_base_list = zip(slide_base, slide_list)
-    slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
-    print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
+    if not args.clobber:
+        processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
+        print('Found {} processed slides.'.format(len(processed_list)))
+        processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
+        slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
+        slide_base_list = zip(slide_base, slide_list)
+        slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
+        print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
     print('out_dir: ', out_dir)
     with tf.Session(config=config) as sess:
-        image_op , predict_op = get_input_output_ops(sess, model_path)
+        image_op , predict_op = get_input_output_ops(sess, args.model_path)
         times = {}
         fpss = {}
         for slide_num, slide_path in enumerate(slide_list):
@@ -181,7 +193,6 @@ if __name__ == '__main__':
             except Exception as e:
                 print('Caught exception')
                 print(e.__doc__)
-                print(e.message)
 
             finally:
                 os.remove(ramdisk_path)
