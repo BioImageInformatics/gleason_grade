@@ -4,7 +4,6 @@
 *.pyc
 *.tar.gz
 
-
 */logs/*
 */snapshots/*
 */events.*
@@ -15,3 +14,16 @@
 *.tfrecord
 
 tfmodels/
+svs_reader/
+*/inference/
+*/debug/
+*/logs/
+*/snapshots/
+*FOV/
+*ipynb_checkpoints
+*/bottlenecks/
+
+*.csv
+*.txt
+*checkpoint*
+*events*
