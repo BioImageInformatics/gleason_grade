@@ -8,8 +8,8 @@ import sys
 import glob
 import argparse
 
-IMGSIZE = 512
-N_SUBIMGS = 5
+IMGSIZE = 224*2
+N_SUBIMGS = 3
 def split_subimgs(img):
   x, y = img.shape[:2]
   x_vect = np.linspace(0, x-IMGSIZE, N_SUBIMGS, dtype=np.int)
@@ -19,9 +19,13 @@ def split_subimgs(img):
   for x_ in x_vect:
     for y_ in y_vect:
       try:
-        subimgs.append(img[x_:x_+IMGSIZE, y_:y_+IMGSIZE, :])
+        simg = img[x_:x_+IMGSIZE, y_:y_+IMGSIZE, :]
+        subimgs.append(cv2.resize(simg, fx=0.5, fy=0.5, 
+          dsize=(0,0)))
       except:
-        subimgs.append(img[x_:x_+IMGSIZE, y_:y_+IMGSIZE])
+        simg = img[x_:x_+IMGSIZE, y_:y_+IMGSIZE]
+        subimgs.append(cv2.resize(simg, fx=0.5, fy=0.5,
+          dsize=(0,0), interpolation=cv2.INTER_NEAREST))
   return subimgs
 
 def initialize_output_dirs(output_base):
@@ -35,7 +39,7 @@ CLASSES = range(5)
 def main(source_jpg_dir, source_mask_dir, output_base):
   source_jpg_list = sorted(glob.glob(os.path.join(source_jpg_dir, '*jpg')))
   source_mask_list = sorted(glob.glob(os.path.join(source_mask_dir, '*png')))
-  class_counts = np.zeros(5)
+  class_counts = np.zeros(5, dtype=np.int)
 
   if not os.path.exists(output_base):
     initialize_output_dirs(output_base)
@@ -48,6 +52,7 @@ def main(source_jpg_dir, source_mask_dir, output_base):
     mask = cv2.imread(mask, -1)
     subimgs = split_subimgs(img)
     submasks = split_subimgs(mask)
+
     for subimg, submask in zip(subimgs, submasks):
       counts = np.zeros(5)
       for k in CLASSES:
@@ -59,16 +64,18 @@ def main(source_jpg_dir, source_mask_dir, output_base):
 
       if stroma_cnt > 0.95 * counts.sum():
         outpath = os.path.join(output_base,
-          '{}'.format(4),
-          '{}.{}.jpg'.format(4, class_counts[4]))
+                               '{}'.format(4),
+                               '{:04d}.{:05d}.{:02d}.jpg'.format(ix, class_counts[4], 4))
         cv2.imwrite(outpath, subimg)
         class_counts[4] += 1
         continue
 
       if non_stroma_cnt > 0.5 * counts.sum():
         outpath = os.path.join(output_base,
-          '{}'.format(non_stroma_max),
-          '{}.{}.jpg'.format(non_stroma_max, int(class_counts[non_stroma_max])))
+                               '{}'.format(non_stroma_max),
+                               '{:04d}.{:05d}.{:02d}.jpg'.format( ix, 
+                                                   int(class_counts[non_stroma_max]),
+                                                   non_stroma_max))
         cv2.imwrite(outpath, subimg)
         class_counts[non_stroma_max] += 1
 

@@ -17,12 +17,23 @@ import numpy as np
 #                    [255,255,255]
 #                   ])
 
-colors = np.array([[234, 228, 44], # Yellow
-                   [232, 144, 37],  # Orange
-                   [206, 29, 2],  # Red
-                   [161, 166, 168], # Gray
-                   [255, 255, 255],
-                  ])
+# colors = np.array([[234, 228, 44], # Yellow
+#                    [232, 144, 37],  # Orange
+#                    [206, 29, 2],  # Red
+#                    [161, 166, 168], # Gray
+#                    [255, 255, 255],
+#                   ])
+
+colors = np.array([
+    (130,84,45),   # brown
+        (214,7,36),    # red
+        (214,7,36),    # red
+            (37,131,135),   # turquois
+                (244,202,203), # pink
+                (255,255,255), # white
+                ])
+
+
 
 def color_mask(mask):
     uq = np.unique(mask)
@@ -47,7 +58,7 @@ def colorize(img_path, mask_path):
     print(img_path, mask_path, np.unique(mask))
     mask = color_mask(mask)
 
-    img = np.add(img*0.4, mask*0.6)
+    img = np.add(img*0.5, mask*0.5)
     img = cv2.convertScaleAbs(img)
     return img
 
@@ -64,13 +75,14 @@ def main(imgsrc, msksrc, dst):
         color = colorize(img, msk)
         img_base = os.path.basename(img)
         dstfile = os.path.join(dst, img_base)
+        print(dstfile)
         cv2.imwrite(dstfile, color)
 
 
 if __name__ == '__main__':
 
-    imgsrc = 'val_jpg_ext'
-    msksrc = 'val_mask_ext'
-    dst = 'colored_val_ext'
+    imgsrc = 'tiles_train_val/val_jpg_ext'
+    msksrc = 'tiles_train_val/val_mask_ext'
+    dst =    'tiles_train_val/colored_val_ext'
 
     main(imgsrc, msksrc, dst)
