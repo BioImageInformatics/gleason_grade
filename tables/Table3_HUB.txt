@@ -1,0 +1,5 @@
+Model	Mag.	FOV 	Params	Tile F1 	WSI F1	Time	FPS
+Hub Inception-V3	10x	598	21.8 M	0.674	0.652	1.62	66.18
+Hub NASNET	10x	662	84.9 M	0.81	0.769	2.68	31.84
+Hub ResNet-152	10x	448	58.3 M	0.81	0.665	2.16	86.82
+Hub MobileNet-V2	10x	448	0.76 M	0.813	0.719	1.73	108.52
