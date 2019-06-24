@@ -45,7 +45,7 @@ def colorize(img_path, mask_path):
         print('Resized: {} {}'.format(img.shape, mask.shape))
     mask = color_mask(mask)
 
-    img = np.add(img*0.4, mask*0.6)
+    img = np.add(img*0.5, mask*0.5)
     img = cv2.convertScaleAbs(img)
     return img
 

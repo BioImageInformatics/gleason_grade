@@ -1,28 +1,21 @@
 #!/bin/bash
 
 set -e
-# module_name=inception_v3
-# module_name=mobilenet_v2_050_224
-# module_name=nasnet_large
-# module_name=resnet_v2_152
 
 modules=(
-inception_v3
 mobilenet_v2_050_224
-nasnet_large
-resnet_v2_152
 )
 
 for module_name in ${modules[@]}; do
   module_url="https://tfhub.dev/google/imagenet/$module_name/feature_vector/1"
   echo $module_url
 
-  python retrain.py --image_dir ../data/tfhub-4class \
+  python retrain.py --image_dir ../data/tfhub-10x \
   --summaries_dir ./logs/$module_name \
   --bottleneck_dir ./bottlenecks/$module_name \
   --tfhub_module $module_url \
   --saved_model_dir ./snapshots-4class/$module_name \
-  --how_many_training_steps 5000 \
+  --how_many_training_steps 2500 \
   --learning_rate 0.001 \
-  --flip_left_right 1
+  # --flip_left_right 1
 done
