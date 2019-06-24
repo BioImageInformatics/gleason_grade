@@ -16,7 +16,13 @@ from .unet import Inference as UnetInference
 from .unet_small import Training as UnetSmallTraining
 from .unet_small import Inference as UnetSmallInference
 
+from .model_factory import get_model
+
 __all__ = [
+    # Utilities
+    'get_model',
+
+    # Models
     'DensenetTraining',
     'DensenetInference',
     'DensenetSmallTraining',
