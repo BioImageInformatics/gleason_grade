@@ -182,12 +182,18 @@ def _get_model(model_type, sess, process_size):
   return model
 
 
+def read_list(slide_list):
+  with open(slide_list, 'r') as f
+    lst = [x.strip() for x in f]
+  return lst
+
 def main(args):
   assert args.out is not None
-  assert args.slide_dir is not None
+  # assert args.slide_dir is not None
   out_dir = args.out
 
-  slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
+  # slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
+  slide_list = read_list(args.slide_list)
   print('Working on {} slides from {}'.format(len(slide_list), args.slide_dir))
 
   if not os.path.exists(out_dir):
@@ -283,7 +289,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--model', default='densenet')
   parser.add_argument('--snapshot', default='./densenet.ckpt-61690')
-  parser.add_argument('--slide_dir', default=None)
+  parser.add_argument('--slide_list', default=None)
   parser.add_argument('--out', default=None)
 
   parser.add_argument('--mag', default=PROCESS_MAG, type=int)

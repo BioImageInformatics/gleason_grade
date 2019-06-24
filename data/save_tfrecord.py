@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import tensorflow as tf
 import numpy as np
 import glob
@@ -7,27 +9,32 @@ import os
 
 import tfmodels
 
-train_img_patt  = './x0002/4class/*_rgb.jpg'
-train_mask_patt = './x0002/4class/*_mask.png'
-# test_img_patt   = './val_jpg_ext/*.jpg'
-# test_mask_patt  = './val_mask_ext/*.png'
+img_list_file = 'img_list.txt'
+mask_list_file = 'mask_list.txt'
 
-imgs  = sorted(glob.glob(train_img_patt))
-masks = sorted(glob.glob(train_mask_patt)) 
+with open(img_list_file, 'r') as f:
+    imgs = np.array([x.strip() for x in f])
+with open(mask_list_file, 'r') as f:
+    masks = np.array([x.strip() for x in f])
+
 print(len(imgs), len(masks))
+perm = np.arange(len(imgs))
+np.random.shuffle(perm)
+imgs = list(imgs[perm])
+masks = list(masks[perm])
 
-train_record_path = 'gleason_grade_4class_x0002.tfrecord'
-# test_record_path = 'gleason_grade_val_ext.tfrecord'
+for k in range(10):
+    print(imgs[k], masks[k])
+
+record_path = 'gleason_grade_4class_train.tfrecord'
 N_CLASSES = 4
 SUBIMG = 512
 
-tfmodels.image_mask_2_tfrecord(train_img_patt, train_mask_patt, train_record_path,
+tfmodels.image_mask_2_tfrecord(imgs, masks, record_path,
    n_classes=N_CLASSES, subimage_size=SUBIMG)
-# tfmodels.image_mask_2_tfrecord(test_img_patt, test_mask_patt, test_record_path,
-#     n_classes=N_CLASSES, subimage_size=SUBIMG)
 
-tfmodels.check_tfrecord(train_record_path, as_onehot=True,
+tfmodels.check_tfrecord(record_path, as_onehot=True,
     mask_dtype = tf.uint8, n_classes=N_CLASSES, prefetch=100,
     crop_size=256)
-# tfmodels.check_tfrecord(test_record_path, as_onehot=True,
-#     mask_dtype = tf.uint8, n_classes=N_CLASSES, prefetch=100)
+# # tfmodels.check_tfrecord(test_record_path, as_onehot=True,
+# #     mask_dtype = tf.uint8, n_classes=N_CLASSES, prefetch=100)

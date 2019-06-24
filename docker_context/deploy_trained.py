@@ -16,17 +16,12 @@ from svs_reader import Slide, reinhard
 import tfmodels
 
 from densenet import Inference as densenet
-# from densenet_small import Inference as densenet_s
-# from fcn8s import Inference as fcn8s
-# from fcn8s_small import Inference as fcn8s_s
-# from unet import Inference as unet
-# from unet_small import Inference as unet_s
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
 PRINT_ITER = 500
-RAM_DISK = '/app'
+RAM_DISK = '/dev/shm'
 
 def preprocess_fn(img):
   # img = reinhard(img)
@@ -87,14 +82,15 @@ def process_slide(slide_path, fg_path, model, sess, out_dir, process_mag,
   """
   
   print('Working {}'.format(slide_path))
-  print('Working {}'.format(fg_path))
-  fgimg = cv2.imread(fg_path, 0)
-  fgimg = cv2.morphologyEx(fgimg, cv2.MORPH_CLOSE, 
-                           cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)))
+  # print('Working {}'.format(fg_path))
+  # fgimg = cv2.imread(fg_path, 0)
+  # fgimg = cv2.morphologyEx(fgimg, cv2.MORPH_CLOSE, 
+  #                          cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)))
   svs = Slide(slide_path  = slide_path,
-        background_speed = 'image', 
-        background_image = fgimg,
+        background_speed = 'all', 
+        # background_image = fgimg,
         preprocess_fn = preprocess_fn,
+        normalize_fn  = lambda x: x,
         process_mag   = process_mag,
         process_size  = process_size,
         oversample  = oversample,
@@ -102,7 +98,7 @@ def process_slide(slide_path, fg_path, model, sess, out_dir, process_mag,
         )
   svs.initialize_output('prob', dim=n_classes)
   svs.initialize_output('rgb', dim=3)
-  PREFETCH = min(len(svs.place_list), 1024)
+  PREFETCH = min(len(svs.place_list), 256)
 
   def wrapped_fn(idx):
     try:
@@ -120,7 +116,7 @@ def process_slide(slide_path, fg_path, model, sess, out_dir, process_mag,
 
   ds = tf.data.Dataset.from_generator(generator=svs.generate_index,
     output_types=tf.int64)
-  ds = ds.map(read_region_at_index, num_parallel_calls=12)
+  ds = ds.map(read_region_at_index, num_parallel_calls=6)
   ds = ds.prefetch(PREFETCH)
   ds = ds.batch(batch_size)
 
@@ -176,17 +172,6 @@ def _get_model(model_type, sess, process_size, n_classes):
   if model_type == 'densenet':
     model = densenet(sess=sess, x_dims=x_dims,
                      n_classes=n_classes)
-  # if model_type == 'densenet_s':
-  #   model = densenet_s(sess=sess, x_dims=x_dims)
-  # if model_type == 'fcn8s':
-  #   model = fcn8s(sess=sess, x_dims=x_dims)
-  # if model_type == 'fcn8s_s':
-  #   model = fcn8s_s(sess=sess, x_dims=x_dims)
-  # if model_type == 'unet':
-  #   model = unet(sess=sess, x_dims=x_dims)
-  # if model_type == 'unet_s':
-  #   model = unet_s(sess=sess, x_dims=x_dims)
-
   return model
 
 def get_slide_from_list(slide_file):
@@ -213,7 +198,6 @@ def get_matching_fg(slide_list, fg_list):
 
   for s, f in zip(slide_, fg_):
     print(s, f)
-
   return slide_, fg_
 
 def main(args):
@@ -222,8 +206,9 @@ def main(args):
   assert os.path.exists(args.slide_list), "{} does not exist".format(slide_list)
   # slide_list = glob.glob(os.path.join(args.slide_dir, '*svs'))
   slide_list = get_slide_from_list(args.slide_list)
-  fg_list = get_slide_from_list(args.fg_list)
-  slide_list, fg_list = get_matching_fg(slide_list, fg_list)
+  fg_list = slide_list
+  # fg_list = get_slide_from_list(args.fg_list)
+  # slide_list, fg_list = get_matching_fg(slide_list, fg_list)
   print('Working on {} slides from {}'.format(len(slide_list), args.slide_list))
 
   print('out_dir: ', out_dir)
@@ -231,14 +216,14 @@ def main(args):
     print('Creating {}'.format(out_dir))
     os.makedirs(out_dir)
 
-  # processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
-  # print('Found {} processed slides.'.format(len(processed_list)))
-  # processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
+  processed_list = glob.glob(os.path.join(out_dir, '*_prob.npy'))
+  print('Found {} processed slides.'.format(len(processed_list)))
+  processed_base = [os.path.basename(x).replace('_prob.npy', '') for x in processed_list]
 
-  # slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
-  # slide_base_list = zip(slide_base, slide_list)
-  # slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
-  # print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
+  slide_base = [os.path.basename(x).replace('.svs', '') for x in slide_list]
+  slide_base_list = zip(slide_base, slide_list)
+  slide_list = [lst for bas, lst in slide_base_list if bas not in processed_base]
+  print('Trimmed processed slides. Working on {}'.format(len(slide_list)))
 
   with tf.Session(config=config) as sess:
     model = _get_model(args.model, sess, args.size, args.n_classes)
@@ -255,10 +240,9 @@ def main(args):
       print('\n\n[\tSlide {}/{}\t]\n'.format(slide_num, len(slide_list)))
       slide_path_base = os.path.basename(slide_path)
 
-      assert os.path.exists(fg_path), 'fg file not found'.format(fg_path)
+      # assert os.path.exists(fg_path), 'fg file not found'.format(fg_path)
       ramdisk_path = transfer_to_ramdisk(slide_path)
       print(ramdisk_path)
-      print(os.listdir('/app'))
       try:
         time_start = time.time()
         prob_img, rgb_img, fps =  process_slide(ramdisk_path, fg_path, model, sess, out_dir,
@@ -318,15 +302,15 @@ if __name__ == '__main__':
   print(__file__)
 
   # Defaults
-  PROCESS_MAG = 5
+  PROCESS_MAG = 10
   PROCESS_SIZE = 256
   OVERSAMPLE = 1.25
-  BATCH_SIZE = 8
+  BATCH_SIZE = 16
   N_CLASSES = 4
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('--slide_list', default='slide.txt', type=str)
-  parser.add_argument('--fg_list', default='foreground.txt', type=str)
+  parser.add_argument('slide_list', type=str)
+  parser.add_argument('fg_list', type=str)
   parser.add_argument('--model', default='densenet')
   parser.add_argument('--out', default='/inference')
   parser.add_argument('--snapshot', default='./densenet.ckpt-164816')
