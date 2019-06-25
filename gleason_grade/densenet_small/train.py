@@ -7,20 +7,19 @@ import os
 import time
 import argparse
 
-sys.path.insert(0, '../tfmodels')
-import tfmodels
+import traceback
 
-sys.path.insert(0, '.')
-from densenet_small import Training
+import tfmodels
+from gleason_grade import DensenetSmallTraining
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-train_record_path = '../data/gleason_grade_train_ext.tfrecord'
-test_record_path =  '../data/gleason_grade_val_ext.tfrecord'
+train_record_path = '../../data/gleason_grade_4class_train.tfrecord'
+test_record_path =  '../../data/gleason_grade_4class_val.tfrecord'
 
 def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_path):
-    n_classes = 5
+    n_classes = 4
     # batch_size = 32
     # crop_size = 512
     # image_ratio = 0.25
@@ -28,14 +27,13 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
               int(crop_size*image_ratio),
               3]
 
-    iterations = (500/batch_size)*5  ## Define epoch as 10 passes over the data
     epochs = n_epochs ## if epochs=500, then we get 500 * 10 = 2500 times over the data
     snapshot_epochs = 25
     test_epochs = 25
     step_start = 0
 
-    prefetch = 3096
-    threads = 12
+    prefetch = 2048
+    threads = 6
 
     # basedir = '5x'
     log_dir, save_dir, debug_dir, infer_dir = tfmodels.make_experiment(
@@ -56,7 +54,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ratio = image_ratio,
             batch_size = batch_size,
             prefetch = prefetch,
-            shuffle_buffer = 128,
+            shuffle_buffer = 256,
             n_classes = n_classes,
             as_onehot = True,
             mask_dtype = tf.uint8,
@@ -65,14 +63,15 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             n_threads = threads)
         dataset.print_info()
 
-        model = Training( sess = sess,
+        model = DensenetSmallTraining( sess = sess,
             dataset = dataset,
+            n_classes = n_classes,
             global_step = step_start,
             learning_rate = lr_0,
             log_dir = log_dir,
             save_dir = save_dir,
             summary_iters = 100,
-            summary_image_iters = iterations,
+            summary_image_iters = args.iterations,
             summary_image_n = 4,
             max_to_keep = 20,
             # summarize_grads = True,
@@ -90,10 +89,10 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             ## Re-initialize training step to have a clean learning rate curve
             training_step = 0
             print('Starting with model at step {}'.format(model.global_step))
-            for epx in xrange(1, epochs):
+            for epx in range(1, epochs):
                 epoch_start = time.time()
                 epoch_lr = learning_rate(lr_0, gamma, training_step)
-                for itx in xrange(iterations):
+                for itx in range(args.iterations):
                     training_step += 1
                     # model.train_step(lr=learning_rate(lr_0, gamma, training_step))
                     model.train_step(lr=epoch_lr)
@@ -112,6 +111,7 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
             print('Caught exception')
             print(e.__doc__)
             print(e.message)
+            traceback.print_tb(e.__traceback__)
         finally:
             model.snapshot()
             print('Stopping threads')
@@ -120,10 +120,11 @@ def main(batch_size, image_ratio, crop_size, n_epochs, lr_0, basedir, restore_pa
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument( '--batch_size' , default=12 , type=int)
+    parser.add_argument( '--batch_size' , default=32 , type=int)
     parser.add_argument( '--image_ratio', default=0.25 , type=float)
     parser.add_argument( '--crop_size', default=512 , type=int)
     parser.add_argument( '--n_epochs', default=200 , type=int)
+    parser.add_argument( '--iterations', default=500 , type=int)
     parser.add_argument( '--lr', default=1e-4 , type=float)
     parser.add_argument( '--basedir', default='trained' , type=str)
     parser.add_argument( '--restore_path', default=None , type=str)

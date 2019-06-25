@@ -2,22 +2,29 @@
 
 set -e
 
-batch_sizes=(16)
-img_ratios=(0.5)
-crop_sizes=(512)
-epochs=(300)
-lrs=(0.001)
-basedirs=('10x_LONG')
+trainrec=../data/gleason_grade_4class_train.tfrecord
+valrec=../data/gleason_grade_4class_val.tfrecord
 
-# cd into the model directory
-cd densenet
+python ./train.py densenet $trainrec $valrec seg-05x-densenet --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py densenet $trainrec $valrec seg-10x-densenet --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py densenet $trainrec $valrec seg-20x-densenet --image_ratio 1.0 --crop_size 256 --lr 0.0001 
 
-for i in `seq 0 2`; do
-  python ./train.py \
-  --batch_size ${batch_sizes[$i]} \
-  --image_ratio ${img_ratios[$i]} \
-  --crop_size ${crop_sizes[$i]} \
-  --n_epochs ${epochs[$i]} \
-  --lr ${lrs[$i]} \
-  --basedir ${basedirs[$i]}
-done
+python ./train.py densenet_s $trainrec $valrec seg-05x-densenet-s --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py densenet_s $trainrec $valrec seg-10x-densenet-s --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py densenet_s $trainrec $valrec seg-20x-densenet-s --image_ratio 1.0 --crop_size 256 --lr 0.0001 
+
+python ./train.py fcn8s $trainrec $valrec seg-05x-fcn8s --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py fcn8s $trainrec $valrec seg-10x-fcn8s --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py fcn8s $trainrec $valrec seg-20x-fcn8s --image_ratio 1.0 --crop_size 256 --lr 0.0001 
+
+python ./train.py fcn8s_s $trainrec $valrec seg-05x-fcn8s-s --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py fcn8s_s $trainrec $valrec seg-10x-fcn8s-s --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py fcn8s_s $trainrec $valrec seg-20x-fcn8s-s --image_ratio 1.0 --crop_size 256 --lr 0.0001 
+
+python ./train.py unet $trainrec $valrec seg-05x-unet --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py unet $trainrec $valrec seg-10x-unet --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py unet $trainrec $valrec seg-20x-unet --image_ratio 1.0 --crop_size 256 --lr 0.0001 
+
+python ./train.py unet_s $trainrec $valrec seg-05x-unet_s --image_ratio 0.25 --crop_size 512 --lr 0.0001 
+python ./train.py unet_s $trainrec $valrec seg-10x-unet_s --image_ratio 0.5 --crop_size 512 --lr 0.0001 
+python ./train.py unet_s $trainrec $valrec seg-20x-unet_s --image_ratio 1.0 --crop_size 256 --lr 0.0001 
