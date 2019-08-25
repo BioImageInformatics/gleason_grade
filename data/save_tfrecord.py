@@ -9,8 +9,8 @@ import os
 
 import tfmodels
 
-img_list_file = 'img_list.txt'
-mask_list_file = 'mask_list.txt'
+img_list_file = 'img_list_val.txt'
+mask_list_file = 'mask_list_val.txt'
 
 with open(img_list_file, 'r') as f:
     imgs = np.array([x.strip() for x in f])
@@ -26,7 +26,7 @@ masks = list(masks[perm])
 for k in range(10):
     print(imgs[k], masks[k])
 
-record_path = 'gleason_grade_4class_train.tfrecord'
+record_path = 'gleason_grade_4class_val.tfrecord'
 N_CLASSES = 4
 SUBIMG = 512
 
