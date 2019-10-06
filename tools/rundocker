@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker run --rm -it --shm-size 5g --runtime=nvidia -v /mnt/slowdata/gleason-grade-slides:/slides -v /mnt/hotdata/gleason_grade:/gg -v /home/nathan/src/svsutils:/svsutils ingn/tensorflow:gpu-openslide
