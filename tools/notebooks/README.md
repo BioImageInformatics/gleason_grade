@@ -7,6 +7,7 @@ To install, simply run `pip install jupytext` inside a virtualenv or conda envir
 Afterwards, run `jupytext --to notebook $markdown_file` to generate `ipynb` from `md`.
 
 This project is set to ignore `ipynb` unless forcefully added with `git add -f`.
+```
 tools/
 ├── notebooks
 ├── seg.05x.densenet
@@ -136,5 +137,4 @@ tools/
     └── 75pct
         └── snapshot
             └── variables
-
-128 directories
+```
