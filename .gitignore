@@ -27,3 +27,4 @@ svs_reader/
 *.txt
 *checkpoint*
 *events*
+*.ipynb
