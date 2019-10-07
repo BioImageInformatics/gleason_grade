@@ -1,4 +1,4 @@
-#!/usr/env/bin python
+#!/usr/bin/env python
 """
 This example deploys a classifier to a list of SVS slides
 
