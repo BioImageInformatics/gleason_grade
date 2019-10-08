@@ -95,7 +95,7 @@ for img_idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
         maj = np.argmax(totals)   
         if totals[maj] > 0.5 * (crop_size**2):
             # check for stroma and skip
-            if maj==4 and totals[maj] < 0.95 * (crop_size*2):
+            if maj==4 and totals[maj] < 0.95 * (crop_size**2):
                 continue
         else:
             # if there's no consensus (> 50% label) in this piece of the image, skip it.
@@ -104,8 +104,15 @@ for img_idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
         idx += 1
         if idx % 500 == 0:
             print('{} [{} / {}]'.format(idx, img_idx, len(jpg_list)))
+            
         x_ = x[x0:x0+crop_size, y0:y0+crop_size, :]
         x_ = cv2.resize(x_, dsize=(0,0), fx=resize, fy=resize)
+        # Skip white
+        gray = cv2.cvtColor(x_, cv2.COLOR_RGB2GRAY)
+        if (gray > 220).sum() > 0.5*(crop_size**2):
+            # More than half white
+            continue
+            
         x_ = x_ * (1/255.)
         x_ = np.expand_dims(x_, 0)
         

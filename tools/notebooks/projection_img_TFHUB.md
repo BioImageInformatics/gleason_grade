@@ -90,8 +90,6 @@ def get_input_output_ops(sess, model_path):
 ```
 
 ```python
-
-# config = tf.ConfigProto( device_count = {'GPU': 0} )
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
@@ -108,6 +106,7 @@ And run the classifier on images
 
 ```python
 DATA_HOME = '../../data'
+## Need the sorted() since glob returns in a random order
 jpg_list =  sorted(glob.glob(os.path.join(DATA_HOME, 'val_jpg_ext/*.jpg')))
 mask_list = sorted(glob.glob(os.path.join(DATA_HOME, 'val_mask_ext/*.png')))
 
@@ -146,7 +145,7 @@ for img_idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
         maj = np.argmax(totals)   
         if totals[maj] > 0.5 * (crop_size**2):
             # check for stroma -- two ways to skip stroma
-            if maj==4 and totals[maj] < 0.95 * (crop_size*2):
+            if maj==4 and totals[maj] < 0.95 * (crop_size**2):
                 continue
         else:
             continue
@@ -159,6 +158,12 @@ for img_idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
             print('{} [{} / {}]'.format(idx, img_idx, len(jpg_list)))
         x_ = x[x0:x0+crop_size, y0:y0+crop_size, :]
         x_ = cv2.resize(x_, dsize=(0,0), fx=resize, fy=resize)
+        # Skip white
+        gray = cv2.cvtColor(x_, cv2.COLOR_RGB2GRAY)
+        if (gray > 220).sum() > 0.5*(crop_size**2):
+            # More than half white
+            continue
+            
         x_ = x_ * (1/255.)
         x_ = np.expand_dims(x_, 0)
         
@@ -166,17 +171,23 @@ for img_idx, (jpg, mask) in enumerate(zip(jpg_list, mask_list)):
         if np.random.randn() < -1:
             img_plotting[idx] = x_
         
-        ## Toggle between classification and z-manifold calculation
+        ## Comment out to refresh the plotting images quickly
         yhat = sess.run(predict_op, feed_dict={image_in: x_.astype(np.float32)})
         y_vectors.append(yhat)
         
-y_vectors = np.concatenate(y_vectors, axis=0)
+print('Done')
+```
+
+```python
+# img_classes are 0-5 - adjust them down
+# 2 --> combines class 1 and 2.
+# 3 --> 2 and 4 --> 3 is a shift down.
 img_classes = np.asarray(img_classes)
 img_classes[img_classes==2] = 1
 img_classes[img_classes==3] = 2
 img_classes[img_classes==4] = 3
 
-print('Done')
+y_vectors = np.concatenate(y_vectors, axis=0)
 ```
 
 ```python
@@ -185,47 +196,49 @@ print('Done')
 
 ## Re-calculate the embedding
 z_vectors = np.load('mobilenet_z_vectors.npy')
-z_manifold = umap.UMAP(n_neighbors=15, min_dist=0.5).fit_transform(z_vectors)
+z_manifold = umap.UMAP(n_neighbors=20, min_dist=0.5).fit_transform(z_vectors)
 
 print(z_manifold.shape)
 ```
 
 ```python
 ymax = np.argmax(y_vectors, axis=-1)
-# img_classes are 0-5 - adjust them down
-# 2 --> combines class 1 and 2.
-# 3 --> 2 and 4 --> 3 is a shift down.
 for k in range(4):
     print((ymax==k).sum())
     
+print(ymax.shape)
 accuracy = np.mean(img_classes == ymax)
 print(accuracy)
 ```
 
 ```python
 fig, ax = plt.subplots(1,1, figsize=(4,4), dpi=300)
+
+# Draw the scatter plot
 for k in range(4):
-    idx = img_classes==k
+#     idx = img_classes==k   # real class
+    idx = ymax==k # predicted class
     plt.scatter(z_manifold[idx,0], z_manifold[idx,1], c=COLOR_HEX[k], label=LABELS[k],
                 alpha=0.7, s=3)
     
-# plt.title('MobileNet 75%', fontsize=32)
 plt.xticks([])
 plt.yticks([])
-# plt.legend(fontsize=12)
 
 artists = []
 indices = [k for k in img_plotting.keys()]
+
+# Change the seed to change the plotted images
+np.random.seed(1111)
 np.random.shuffle(indices)
-for k in indices[:12]:
+for k in indices[:10]:
     img_ = img_plotting[k]
     x,y = z_manifold[k]
     im = OffsetImage(np.squeeze(img_), zoom=0.125)
     ab = AnnotationBbox(im, (x,y), xycoords='data', pad=0.05, frameon=True,
-                        bboxprops={'ec': COLOR_HEX[ymax[k]], 'lw': 2})
+                        bboxprops={'ec': COLOR_HEX[img_classes[k]], 'lw': 2})
     artists.append(ax.add_artist(ab))
     
-# plt.savefig('MobileNet_img.png', bbox_inches='tight')
+# plt.savefig('MobileNet_imgs.png', bbox_inches='tight')
 ```
 
 ```python
