@@ -8,7 +8,7 @@ from split_datasets import load_dataset
 
 import argparse
 
-from tensorflow.keras.applications import ResNet50V2
+from tensorflow.keras.applications import ResNet50V2, VGG16, VGG19, DenseNet121
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
@@ -16,8 +16,19 @@ from tensorflow.keras.losses import categorical_crossentropy
 
 
 def define_model(architecture, input_shape=(128, 128, 3), n_classes=4):
-  base_model = ResNet50V2(weights='imagenet', include_top=False,
-    input_shape=input_shape)
+  if architecture == 'ResNet50V2':
+    base_model = ResNet50V2(weights='imagenet', include_top=False,
+      input_shape=input_shape)
+  elif architecture == 'VGG16':
+    base_model = VGG16(weights='imagenet', include_top=False,
+      input_shape=input_shape)
+  elif architecture == 'VGG19':
+    base_model = VGG19(weights='imagenet', include_top=False,
+      input_shape=input_shape)
+  elif architecture == 'DenseNet121':
+    base_model = DenseNet121(weights='imagenet', include_top=False,
+      input_shape=input_shape)
+
   x = base_model.output
   x = GlobalAveragePooling2D()(x)
   x = Dense(512, activation='relu')(x)
