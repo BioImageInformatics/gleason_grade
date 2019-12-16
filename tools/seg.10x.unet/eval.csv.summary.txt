@@ -1,0 +1,3 @@
+Region_area	TotalAcc	EpitheliumAcc	EpitheliumF1	Stroma_Area
+241650.1394	0.3646	0.7176	0.7880	126216.5997
+538538.0483	0.2234	0.3093	0.2690	281052.2991
