@@ -1,0 +1,8 @@
+#!/bin/bash
+
+docker run --rm -it --shm-size 8g --runtime=nvidia \
+  -v $PWD:/gg \
+  -v $1:/slides \
+  ingn/tensorflow-2.0.0:openslide
+
+#  -v /home/nathan/src/svsutils:/svsutils \
